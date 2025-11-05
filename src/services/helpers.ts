@@ -23,9 +23,12 @@ export async function responseWrapper<T>(
 }
 
 export interface ApiResponseType<T> {
+	success: boolean;
 	code: number;
 	result: T;
 	message?: string;
+	timestamp: string;
+	[key: string]: any;
 }
 
 export interface PaginationResponseType<T> {

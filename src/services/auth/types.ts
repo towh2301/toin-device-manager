@@ -1,7 +1,17 @@
 export interface Auth {
-	accessToken: string;
-	refreshToken: string;
+	access_token: string;
+	refresh_token: string;
+	user: User;
 }
+
+export interface User {
+	id: string;
+	username: string;
+	email: string;
+	role: string[];
+	isActive: boolean;
+}
+
 export enum LoginKey {
 	USERNAME = 'username',
 	PASSWORD = 'password',

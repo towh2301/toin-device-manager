@@ -1,44 +1,33 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+// src/store/auth.store.ts
 import { create } from 'zustand';
-import { createJSONStorage, persist, StateStorage } from 'zustand/middleware';
-import { Role, User } from '../types';
 
 interface AuthState {
-	user: User | null;
-	role: Role[] | null;
-	accessTokenState: string | null;
-	refreshTokenState: string | null;
-	setUser: (user: User) => void;
-	setTokens: (accessToken: string, refreshToken: string) => void;
-	clearAuth: () => void;
+	access_token: string | null;
+	refresh_token: string | null;
+	user: any | null; // Hoặc kiểu dữ liệu người dùng cụ thể của bạn
+
+	setTokens: (access: string | null, refresh: string | null) => void;
+	setUser: (user: any | null) => void;
+	signOut: () => void;
 }
 
-export const useAuthStore = create<AuthState>()(
-	persist(
-		(set) => ({
-			user: null,
-			role: null,
-			accessTokenState: null,
-			refreshTokenState: null,
+export const useAuthStore = create<AuthState>((set) => ({
+	access_token: null,
+	refresh_token: null,
+	user: null,
 
-			setUser: (user) => set({ user }),
-			setTokens: (accessToken, refreshToken) =>
-				set({
-					accessTokenState: accessToken,
-					refreshTokenState: refreshToken,
-				}),
-
-			clearAuth: () =>
-				set({
-					user: null,
-					role: null,
-					accessTokenState: null,
-					refreshTokenState: null,
-				}),
+	setTokens: (access, refresh) =>
+		set({
+			access_token: access,
+			refresh_token: refresh,
 		}),
-		{
-			name: 'auth-storage',
-			storage: createJSONStorage(() => AsyncStorage as StateStorage),
-		}
-	)
-);
+
+	setUser: (user) => set({ user }),
+
+	signOut: () =>
+		set({
+			access_token: null,
+			refresh_token: null,
+			user: null,
+		}),
+}));

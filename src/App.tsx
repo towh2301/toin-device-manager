@@ -1,20 +1,26 @@
 // App.tsx
+import { NavigationContainer } from '@react-navigation/native';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
-import { TamaguiProvider, Theme } from 'tamagui';
+import { Toast } from 'react-native-toast-message/lib/src/Toast';
+import { TamaguiProvider } from 'tamagui';
 import { tamaguiCustomConfig } from './config';
-import LoginScreen from './screens/auth';
+import AppNavigator from './navigation/AppNavigator';
 
 // ------------------------------------------------------------------
 // App entry point
 // ------------------------------------------------------------------
+const queryClient = new QueryClient();
+
 export default function App() {
-	// You can toggle `defaultTheme` or use a state to switch themes
 	return (
-		<TamaguiProvider config={tamaguiCustomConfig} defaultTheme="light">
-			{/* Force dark theme on the whole app – remove to use OS preference */}
-			<Theme name="light">
-				<LoginScreen />
-			</Theme>
-		</TamaguiProvider>
+		<QueryClientProvider client={queryClient}>
+			<TamaguiProvider config={tamaguiCustomConfig} defaultTheme="light">
+				<NavigationContainer>
+					<AppNavigator />
+				</NavigationContainer>
+				<Toast />
+			</TamaguiProvider>
+		</QueryClientProvider>
 	);
 }
