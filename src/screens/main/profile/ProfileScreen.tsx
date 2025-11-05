@@ -1,4 +1,5 @@
 import { useAuthStore } from '@/src/store';
+import avatar from '@assets/images/person.png';
 import { IdCard, LogOut, Mail, Shield, User } from '@tamagui/lucide-icons';
 import React from 'react';
 import { Image } from 'react-native';
@@ -18,7 +19,6 @@ import {
 // Hoặc chỉ đơn giản là gọi hàm logout từ AuthContext.
 
 const ProfileScreen = () => {
-	const avatar = require('../../assets/images/person.png');
 	// Lấy thông tin người dùng và hàm đăng xuất từ Context
 	const { user, signOut } = useAuthStore();
 
@@ -80,7 +80,7 @@ const ProfileScreen = () => {
 					source={avatar}
 					style={{ width: '100%', height: '100%' }}
 					resizeMode="cover"
-				></Image>
+				/>
 			</YStack>
 
 			{/* YGroup giúp tạo danh sách với style thống nhất (như List Item) */}
