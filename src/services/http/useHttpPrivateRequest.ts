@@ -1,71 +1,92 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import axios, { AxiosInstance } from 'axios';
+import axios, { AxiosError, AxiosInstance } from 'axios';
 
-export const useHttpPrivateRequest = (baseURL: string): AxiosInstance => {
-	const apiInstance = axios.create({
+interface HttpPrivateRequestOptions {
+	baseURL: string;
+	onAuthFailure?: () => void;
+}
+
+let privateApiInstance: AxiosInstance | null = null;
+
+export const useHttpPrivateRequest = ({
+	baseURL,
+	onAuthFailure,
+}: HttpPrivateRequestOptions): AxiosInstance => {
+	if (privateApiInstance) return privateApiInstance;
+
+	privateApiInstance = axios.create({
 		baseURL,
 		headers: {
-			'Cache-Control': 'no-cache',
-			Pragma: 'no-cache',
-			Expires: 0,
 			Accept: 'application/json',
 		},
-		timeout: 30000,
+		timeout: 20000,
 	});
 
-	// Request interceptor to add Authorization header
-	apiInstance.interceptors.request.use(
-		async (config) => {
-			const accessToken = await AsyncStorage.getItem('accessToken');
-			if (accessToken) {
-				config.headers['Authorization'] = `Bearer ${accessToken}`;
+	privateApiInstance.interceptors.request.use(async (config) => {
+		const access_token = await AsyncStorage.getItem('access_token');
+		if (access_token) {
+			config.headers = config.headers || {};
+			config.headers['Authorization'] = `Bearer ${access_token}`;
+		}
+		console.log('🔑 [Auth Header]:', config.headers['Authorization']);
+		console.log('🌐 [Request URL]:', baseURL + (config.url || ''));
+		return config;
+	});
+
+	privateApiInstance.interceptors.response.use(
+		(res) => res,
+		async (error: AxiosError) => {
+			const originalRequest = error.config as any;
+			if (!error.response) {
+				console.error('❌ No response (Network Error)', error.message);
+				return Promise.reject(error);
 			}
-			return config;
-		},
-		// eslint-disable-next-line promise/no-promise-in-callback
-		(error) => Promise.reject(error)
-	);
 
-	// Response interceptor to handle 401 errors and refresh token
-	apiInstance.interceptors.response.use(
-		(response) => response,
-		async (error) => {
-			const { response } = error;
-			const originalRequest = error.config;
-			if (response.status === 401 && !originalRequest._retry) {
+			// Nếu là 401, thử refresh
+			if (error.response.status === 401 && !originalRequest._retry) {
 				originalRequest._retry = true;
+				try {
+					const refresh_token =
+						await AsyncStorage.getItem('refresh_token');
+					if (!refresh_token)
+						throw new Error('Missing refresh_token');
 
-				const refreshToken = await AsyncStorage.getItem('refreshToken');
-
-				if (refreshToken) {
-					// Example of how you might use your refresh token API
 					const { data } = await axios.post(
-						`${baseURL}/refresh-token`,
+						`${baseURL}/auth/refresh`,
 						{
-							refreshToken,
+							refresh_token,
 						}
 					);
-					const newAccessToken = data.result.accessToken;
 
-					// Store new tokens in AsyncStorage
-					await AsyncStorage.setItem('accessToken', newAccessToken);
-					await AsyncStorage.setItem(
-						'refreshToken',
-						data.result.refreshToken
-					);
+					const newAccess = data.result.access_token;
+					const newRefresh = data.result.refresh_token;
 
-					// Set Authorization header with new access token
-					originalRequest.headers[
-						'Authorization'
-					] = `Bearer ${newAccessToken}`;
+					await AsyncStorage.multiSet([
+						['access_token', newAccess],
+						['refresh_token', newRefresh],
+					]);
 
-					return apiInstance(originalRequest);
+					originalRequest.headers['Authorization'] =
+						`Bearer ${newAccess}`;
+					return privateApiInstance!(originalRequest);
+				} catch (refreshError) {
+					await AsyncStorage.multiRemove([
+						'access_token',
+						'refresh_token',
+					]);
+					onAuthFailure?.();
+					return Promise.reject(refreshError);
 				}
 			}
 
+			console.error(
+				'📡 Axios Error:',
+				error.response?.status,
+				error.message
+			);
 			return Promise.reject(error);
 		}
 	);
 
-	return apiInstance;
+	return privateApiInstance;
 };

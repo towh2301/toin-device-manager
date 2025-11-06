@@ -6,7 +6,10 @@ interface AuthState {
 	refresh_token: string | null;
 	user: any | null; // Hoặc kiểu dữ liệu người dùng cụ thể của bạn
 
-	setTokens: (access: string | null, refresh: string | null) => void;
+	setTokens: (
+		access_token: string | null,
+		refresh_token: string | null
+	) => void;
 	setUser: (user: any | null) => void;
 	signOut: () => void;
 }
@@ -16,10 +19,10 @@ export const useAuthStore = create<AuthState>((set) => ({
 	refresh_token: null,
 	user: null,
 
-	setTokens: (access, refresh) =>
+	setTokens: (access_token, refresh_token) =>
 		set({
-			access_token: access,
-			refresh_token: refresh,
+			access_token,
+			refresh_token,
 		}),
 
 	setUser: (user) => set({ user }),

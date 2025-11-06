@@ -2,30 +2,45 @@ type ApiCall = (..._args: any[]) => Promise<any>;
 
 export async function responseWrapper<T>(
 	func: ApiCall,
-	[...args]: any[] = []
+	args: any[] = []
 ): Promise<T> {
-	// eslint-disable-next-line no-async-promise-executor
-	return new Promise(async (res, rej) => {
-		try {
-			const response = (await func(...args)) ?? {};
-			if (response.status >= 200 && response.status < 300)
-				res(response.data);
-			if (response?.originalError?.message === 'CONNECTION_TIMEOUT') {
-				alert(
-					'Connection timeout. Please check your network and try again.'
-				);
-			}
-			rej(new Error(JSON.stringify(response.data)));
-		} catch (err) {
-			rej(err instanceof Error ? err : new Error(String(err)));
+	try {
+		const response = await func(...args);
+
+		// If response is not an object (e.g. null, undefined), default to {}
+		const safeResponse = response ?? {};
+
+		// Success: 2xx
+		if (
+			(safeResponse.status >= 200 && safeResponse.status < 300) ||
+			safeResponse.success === true
+		) {
+			return safeResponse.data; // Return data directly
 		}
-	});
+
+		// Handle specific known errors
+		if (safeResponse?.originalError?.message === 'CONNECTION_TIMEOUT') {
+			alert(
+				'Connection timeout. Please check your network and try again.'
+			);
+		}
+
+		// All non-2xx → throw error
+		throw new Error(
+			safeResponse.message ||
+				JSON.stringify(safeResponse.data) ||
+				'API Error'
+		);
+	} catch (err: any) {
+		// Re-throw as Error
+		throw err instanceof Error ? err : new Error(String(err));
+	}
 }
 
 export interface ApiResponseType<T> {
 	success: boolean;
 	code: number;
-	result: T;
+	data: T;
 	message?: string;
 	timestamp: string;
 	[key: string]: any;

@@ -1,9 +1,9 @@
-import CustomFloatingBar from '@/src/components/bottom_bar/CustomFloatingBar';
 import HomeScreen from '@/src/screens/main/dashboard/HomeScreen';
 import DeviceScreen from '@/src/screens/main/device/DeviceScreen';
 import ProfileScreen from '@/src/screens/main/profile/ProfileScreen';
 import ToinUserScreen from '@/src/screens/main/toin_user/ToinUserScreen';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import CustomFloatingBar from '@src/components/CustomFloatingBar';
 import React from 'react';
 import { BottomTabParamList, NavigationRoutes } from '../types';
 

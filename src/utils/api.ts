@@ -10,16 +10,13 @@ export const stringify = (
 	if (!params) return '';
 
 	Object.keys(params).forEach((key) => {
-		if (!isEmpty(params[`${key}`]) || excludeKey.includes(`${key}`)) {
-			if (Array.isArray(params[`${key}`])) {
-				const array = params[`${key}`] as string[];
-				array.forEach((param: string) => {
-					result += `&${key}=${encodeURIComponent(param)}`;
+		if (!isEmpty(params[key]) || excludeKey.includes(key)) {
+			if (Array.isArray(params[key])) {
+				params[key].forEach((value) => {
+					result += `&${key}=${encodeURIComponent(value.toString())}`;
 				});
 			} else {
-				result += `&${key}=${encodeURIComponent(
-					params[`${key}`].toString()
-				)}`;
+				result += `&${key}=${encodeURIComponent(params[key].toString())}`;
 			}
 		}
 	});

@@ -8,15 +8,15 @@ const useApi = (baseURL = API_URL) => {
 	const privateApi = useHttpPrivateRequest(baseURL);
 
 	const login = (payload: LoginPayload) => {
-		return publicApi.post('/api/v1/auth/login', payload);
+		return publicApi.post('/auth/login', payload);
 	};
 
 	const getUserInfo = () => {
-		return privateApi.get('/api/v1/users/myInfo');
+		return privateApi.get('/users/myInfo');
 	};
 
 	const getRefreshToken = () => {
-		return publicApi.post('/api/v1/auth/refresh');
+		return publicApi.post('/auth/refresh');
 	};
 
 	return {
