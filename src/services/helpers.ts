@@ -5,34 +5,106 @@ export async function responseWrapper<T>(
 	args: any[] = []
 ): Promise<T> {
 	try {
+		console.log('🔄 [Response Wrapper] Making API call with args:', args);
 		const response = await func(...args);
 
-		// If response is not an object (e.g. null, undefined), default to {}
-		const safeResponse = response ?? {};
+		console.log('📡 [Response Wrapper] Raw response:', response);
 
-		// Success: 2xx
+		// The response should already be extracted from Axios by the API functions
+		// Check if it's our API response format (has success field)
+		if (response && typeof response === 'object' && 'success' in response) {
+			if (response.success === true) {
+				console.log(
+					'✅ [Response Wrapper] Success API response:',
+					response
+				);
+				return response as T;
+			} else {
+				console.error(
+					'❌ [Response Wrapper] API returned success: false:',
+					response
+				);
+				throw new Error(
+					response.message || 'API returned success: false'
+				);
+			}
+		}
+
+		// If it still looks like an Axios response (has status), handle it
 		if (
-			(safeResponse.status >= 200 && safeResponse.status < 300) ||
-			safeResponse.success === true
+			response &&
+			typeof response === 'object' &&
+			'status' in response &&
+			'data' in response
 		) {
-			return safeResponse.data; // Return data directly
+			const axiosResponse = response as any;
+
+			// Check if it's a successful HTTP status
+			if (axiosResponse.status >= 200 && axiosResponse.status < 300) {
+				console.log(
+					'✅ [Response Wrapper] Axios success response:',
+					axiosResponse.data
+				);
+
+				// Check if the data has success field
+				if (
+					axiosResponse.data &&
+					typeof axiosResponse.data === 'object' &&
+					'success' in axiosResponse.data
+				) {
+					if (axiosResponse.data.success === true) {
+						return axiosResponse.data as T;
+					} else {
+						throw new Error(
+							axiosResponse.data.message ||
+								'API returned success: false'
+						);
+					}
+				}
+
+				return axiosResponse.data as T;
+			} else {
+				throw new Error(`HTTP ${axiosResponse.status} Error`);
+			}
 		}
 
-		// Handle specific known errors
-		if (safeResponse?.originalError?.message === 'CONNECTION_TIMEOUT') {
-			alert(
-				'Connection timeout. Please check your network and try again.'
+		// If it's a plain object without success field, assume it's valid data
+		if (response && typeof response === 'object') {
+			console.log(
+				'✅ [Response Wrapper] Plain object response:',
+				response
 			);
+			return response as T;
 		}
 
-		// All non-2xx → throw error
-		throw new Error(
-			safeResponse.message ||
-				JSON.stringify(safeResponse.data) ||
-				'API Error'
-		);
+		// Handle null/undefined/primitive responses
+		console.log('✅ [Response Wrapper] Primitive/null response:', response);
+		return response as T;
 	} catch (err: any) {
-		// Re-throw as Error
+		console.error('❌ [Response Wrapper] Error:', err);
+
+		// Handle Axios errors specifically
+		if (err.response) {
+			console.error(
+				'📡 [Response Wrapper] Axios Error Response:',
+				err.response.data
+			);
+			console.error(
+				'📡 [Response Wrapper] Axios Error Status:',
+				err.response.status
+			);
+
+			// Try to extract error message from response
+			const errorMessage =
+				err.response.data?.message ||
+				err.response.data?.error ||
+				err.message ||
+				`HTTP ${err.response.status} Error`;
+
+			throw new Error(errorMessage);
+		}
+
+		// Re-throw as Error for other cases
 		throw err instanceof Error ? err : new Error(String(err));
 	}
 }

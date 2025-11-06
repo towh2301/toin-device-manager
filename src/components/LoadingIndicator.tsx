@@ -1,13 +1,14 @@
 import React from 'react';
 import { ActivityIndicator } from 'react-native';
-import { Text } from 'tamagui';
+import { View } from 'tamagui';
 
 const LoadingIndicator: React.FC<{ data: string }> = ({ data }) => {
 	return (
-		<>
-			<Text>{data}</Text>
-			<ActivityIndicator size="large" color="#0000ff" />
-		</>
+		<View
+			style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}
+		>
+			<ActivityIndicator size="large" color="#007BFF" />
+		</View>
 	);
 };
 

@@ -5,7 +5,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React, { useEffect } from 'react';
 import { ActivityIndicator } from 'react-native';
 import { View } from 'tamagui';
-import LoginScreen from '../screens/auth/LoginScreen'; // Auth Stack
+import LoginScreen from '../screens/auth/LoginScreen';
 import { useAuthStore } from '../store'; // Hoặc đường dẫn đúng
 import TabNavigator from './components/TabNavigator'; // App Stack (Protected)
 
@@ -13,8 +13,7 @@ const RootStack = createNativeStackNavigator<RootStackParamList>();
 
 const AppNavigator = () => {
 	// Tách biệt các state cần theo dõi từ Zustand
-	const accessTokenState = useAuthStore((state) => state.access_token);
-	const setTokens = useAuthStore((state) => state.setTokens);
+	const { user, access_token, setTokens } = useAuthStore();
 
 	const [isLoading, setIsLoading] = React.useState(true);
 
@@ -48,7 +47,7 @@ const AppNavigator = () => {
 
 	return (
 		<RootStack.Navigator screenOptions={{ headerShown: false }}>
-			{accessTokenState ? (
+			{access_token && user ? (
 				// CÓ TOKEN: Hiển thị App Stack (Protected)
 				<RootStack.Screen
 					name={NavigationRoutes.MAIN} // Giả định MAIN dẫn đến TabNavigator

@@ -1,20 +1,43 @@
-import { AppColors } from '@/src/common/app-color';
+import { InputCombo } from '@/src/components/InputCombo';
 import LoadingIndicator from '@/src/components/LoadingIndicator';
 import { TabFilter } from '@/src/components/TabFilter';
 import { DeviceType } from '@/src/services/device/types';
 import { useGetAllDevices } from '@/src/services/device/useGetAllDevices';
-import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
-import { Button, Input, SizeTokens, XStack, YStack } from 'tamagui';
-import CustomList from '../../components/ListItemCustom';
+import { Button, YStack } from 'tamagui';
+import CustomList from '../../../components/ListItemCustom';
 
 const DeviceScreen = () => {
-	const { deviceData, isLoading, isError, invalidateDevices } =
+	const { deviceData, isLoading, isError, error, onGetAllDevices } =
 		useGetAllDevices();
 
 	const [search, setSearch] = React.useState('');
 
-	console.log('useGetAllDevices - data:', deviceData);
+	console.log('🔍 [DeviceScreen] Device data:', deviceData);
+	console.log('⚠️ [DeviceScreen] Is error:', isError);
+	console.log('❌ [DeviceScreen] Error:', error);
+
+	// Handle retry
+	const handleRetry = () => {
+		console.log('🔄 [DeviceScreen] Retrying fetch...');
+		onGetAllDevices();
+	};
+
+	if (isError) {
+		return (
+			<YStack
+				flex={1}
+				justifyContent="center"
+				alignItems="center"
+				padding="$4"
+				gap="$4"
+			>
+				<Button onPress={handleRetry} backgroundColor="$red10">
+					Error: {error?.message || 'Unknown error'}. Tap to retry.
+				</Button>
+			</YStack>
+		);
+	}
 
 	return (
 		<YStack flex={1} alignItems="center" padding="$4" gap="$4">
@@ -25,64 +48,5 @@ const DeviceScreen = () => {
 		</YStack>
 	);
 };
-
-function InputCombo(props: {
-	size: SizeTokens;
-	search?: string;
-	setSearch?: (value: string) => void;
-}) {
-	return (
-		<XStack
-			alignItems="center"
-			width="100%"
-			backgroundColor={AppColors.surface}
-			borderWidth={1}
-			borderColor={AppColors.secondary}
-			borderRadius="$4"
-			marginTop="$8"
-		>
-			<Input
-				minHeight={props.size === '$4' ? 48 : 32}
-				flex={1}
-				size={props.size}
-				placeholder={`Size ${props.size}...`}
-				backgroundColor={AppColors.surface}
-				borderWidth={0}
-				value={props.search}
-				onChangeText={props.setSearch}
-			/>
-			<Button
-				size={props.size}
-				minHeight={props.size === '$4' ? 48 : 32}
-				chromeless
-				pressStyle={{
-					scale: 0.9, // Thu nhỏ component lại còn 90%
-				}}
-				shadowRadius={5}
-				shadowOpacity={0.2}
-				shadowOffset={{ width: 0, height: 2 }}
-			>
-				<Ionicons name="qr-code" size={20} color={AppColors.primary} />
-			</Button>
-			<Button
-				size={props.size}
-				minHeight={props.size === '$4' ? 48 : 32}
-				chromeless
-				pressStyle={{
-					scale: 0.9, // Thu nhỏ component lại còn 90%
-				}}
-				shadowRadius={5}
-				shadowOpacity={0.2}
-				shadowOffset={{ width: 0, height: 2 }}
-			>
-				<Ionicons
-					name="search-outline"
-					size={20}
-					color={AppColors.primary}
-				/>
-			</Button>
-		</XStack>
-	);
-}
 
 export default DeviceScreen;

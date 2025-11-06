@@ -15,22 +15,55 @@ const LoginScreen = () => {
 	const [password, setPassword] = useState('admin123');
 
 	const { onLogin, isPending } = useLogin({
-		onSuccess: (response) => {
-			const authData = response.data;
+		onSuccess: async (response) => {
+			console.log('✅ [LoginScreen] Login success response:', response);
 
-			const { access_token, refresh_token, user } = authData;
+			try {
+				const authData = response.data;
+				const { access_token, refresh_token, user } = authData;
 
-			Toast.show({ type: 'success', text1: 'Đăng nhập thành công' });
+				Toast.show({ type: 'success', text1: 'Đăng nhập thành công' });
 
-			setTokens(access_token, refresh_token);
-			setUser(user);
+				// Use async setTokens and setUser
+				await setTokens(access_token, refresh_token);
+				await setUser(user);
+
+				console.log('✅ [LoginScreen] Auth data saved successfully');
+			} catch (error) {
+				console.error(
+					'❌ [LoginScreen] Error saving auth data:',
+					error
+				);
+				Toast.show({
+					type: 'error',
+					text1: 'Lỗi lưu thông tin đăng nhập',
+					text2: 'Vui lòng thử lại',
+				});
+			}
 		},
 		onError: (error: any) => {
-			console.error('Login failed:', error);
+			console.error('❌ [LoginScreen] Login failed:', error);
+
+			let errorMessage = 'Lỗi không xác định';
+
+			if (error.message?.includes('Network Error')) {
+				errorMessage =
+					'Lỗi kết nối mạng. Vui lòng kiểm tra kết nối internet.';
+			} else if (error.message?.includes('timeout')) {
+				errorMessage = 'Kết nối quá chậm. Vui lòng thử lại.';
+			} else if (
+				error.message?.includes('401') ||
+				error.message?.includes('Unauthorized')
+			) {
+				errorMessage = 'Sai tên đăng nhập hoặc mật khẩu';
+			} else if (error.message) {
+				errorMessage = error.message;
+			}
+
 			Toast.show({
 				type: 'error',
 				text1: 'Đăng nhập thất bại',
-				text2: error.message || 'Lỗi không xác định.',
+				text2: errorMessage,
 			});
 		},
 	});

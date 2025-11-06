@@ -9,7 +9,20 @@ import {
 } from './types';
 
 const useDeviceApi = (baseURL = API_URL) => {
-	const privateApi = useHttpPrivateRequest(baseURL);
+	if (!baseURL) {
+		console.error(
+			'❌ API_URL is not defined! Check your app.json configuration.'
+		);
+		throw new Error('API_URL is not configured');
+	}
+
+	const privateApi = useHttpPrivateRequest({
+		baseURL,
+		onAuthFailure: () => {
+			console.log('🔒 Device API: Authentication failed');
+			// Handle auth failure (e.g., navigate to login)
+		},
+	});
 
 	const createDevice = async (payload: DeviceCreatePayload) => {
 		try {

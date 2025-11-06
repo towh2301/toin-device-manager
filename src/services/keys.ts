@@ -21,4 +21,19 @@ export enum API_KEYS {
 	DEVICE_BY_SEARCH = 'device_by_search',
 }
 
-export const API_URL = Constants.expoConfig?.extra?.apiUrl;
+// Get API URL from expo config with fallback and validation
+export const API_URL = (() => {
+	const apiUrl = Constants.expoConfig?.extra?.apiUrl;
+
+	if (!apiUrl) {
+		console.error('❌ API_URL not found in app.json extra config!');
+		console.error(
+			'📋 Please add "extra": { "apiUrl": "your-api-url" } to your app.json'
+		);
+		// Return a default for development, but log the error
+		return 'http://localhost:3000/api/v1';
+	}
+
+	console.log('🌐 API_URL loaded:', apiUrl);
+	return apiUrl;
+})();
