@@ -1,4 +1,5 @@
 interface DeviceResponse {
+	id: string;
 	name: string;
 	brand: Brand;
 	type: DeviceType;

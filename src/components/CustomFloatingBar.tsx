@@ -45,7 +45,7 @@ const CustomFloatingBar: React.FC<BottomTabBarProps> = ({
 			zIndex={100}
 		>
 			<Card
-				backgroundColor="transparent"
+				backgroundColor="transparent" // Nền trong suốt để hiển thị BlurView
 				borderRadius="$6" // Bo tròn mạnh
 				overflow="hidden" // Cần thiết để clip BlurView
 				// Tùy chỉnh Shadow
@@ -53,12 +53,12 @@ const CustomFloatingBar: React.FC<BottomTabBarProps> = ({
 				shadowOpacity={0.15}
 				shadowRadius={10}
 				elevation={4}
+				borderWidth={1}
 			>
 				{/* 1. BLUR VIEW làm nền cho thanh tab (Fix: Dùng props thay cho StyleSheet.absoluteFillObject) */}
 				<BlurView
-					intensity={60}
+					intensity={96}
 					tint="light"
-					// 🎯 FIX LỖI TS: Thay thế StyleSheet.absoluteFillObject bằng inline style props
 					style={{
 						position: 'absolute',
 						left: 0,

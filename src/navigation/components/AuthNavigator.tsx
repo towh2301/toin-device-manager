@@ -2,13 +2,20 @@
 // navigation/AuthStack.tsx
 import LoginScreen from '@/src/screens/auth/LoginScreen';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import React from 'react';
+import { NavigationRoutes, RootStackParamList } from '../types';
 
-const Stack = createNativeStackNavigator();
+const Stack = createNativeStackNavigator<RootStackParamList>();
 
 const AuthStack = () => {
 	return (
 		<Stack.Navigator screenOptions={{ headerShown: false }}>
-			<Stack.Screen name="Login" component={LoginScreen} />
+			<Stack.Screen
+				name={NavigationRoutes.LOGIN}
+				component={LoginScreen}
+			/>
 		</Stack.Navigator>
 	);
 };
+
+export default AuthStack;
