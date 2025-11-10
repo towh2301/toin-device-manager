@@ -35,6 +35,19 @@ const CustomFloatingBar: React.FC<BottomTabBarProps> = ({
 	const secondaryColor = AppColors.secondary;
 	const backgroundColor = AppColors.background;
 
+	// Hide tab bar on QR scan screen
+	const currentRoute = state.routes[state.index];
+	const nestedState = currentRoute.state as any;
+
+	// Check if we're on QR_SCAN screen in Device stack
+	if (
+		currentRoute.name === NavigationRoutes.DEVICE &&
+		nestedState?.routes?.[nestedState.index]?.name ===
+			NavigationRoutes.QR_SCAN
+	) {
+		return null;
+	}
+
 	return (
 		<YStack
 			position="absolute"

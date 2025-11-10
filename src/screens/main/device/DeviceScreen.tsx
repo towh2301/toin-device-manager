@@ -12,7 +12,6 @@ import {
 	Animated,
 	FlatList,
 	Modal,
-	Pressable,
 	ScrollView,
 	StyleSheet,
 	TextInput,
@@ -284,6 +283,238 @@ export const SortDropdown = ({
 	);
 };
 
+// Device Card Component with animation
+const DeviceCard = React.memo(
+	({ item, onPress }: { item: DeviceResponse; onPress: () => void }) => {
+		const scaleAnim = React.useRef(new Animated.Value(1)).current;
+
+		const handlePressIn = () => {
+			Animated.spring(scaleAnim, {
+				toValue: 0.96,
+				useNativeDriver: true,
+				speed: 50,
+				bounciness: 4,
+			}).start();
+		};
+
+		const handlePressOut = () => {
+			Animated.spring(scaleAnim, {
+				toValue: 1,
+				useNativeDriver: true,
+				speed: 50,
+				bounciness: 4,
+			}).start();
+		};
+
+		const getDeviceIcon = (
+			type: DeviceType
+		): keyof typeof Ionicons.glyphMap => {
+			const iconMap: Record<DeviceType, keyof typeof Ionicons.glyphMap> =
+				{
+					[DeviceType.ALL]: 'cube',
+					[DeviceType.LAPTOP]: 'laptop',
+					[DeviceType.DESKTOP]: 'desktop',
+					[DeviceType.MONITOR]: 'tv',
+					[DeviceType.TABLET]: 'tablet-portrait',
+					[DeviceType.SMARTPHONE]: 'phone-portrait',
+					[DeviceType.PRINTER]: 'print',
+					[DeviceType.CAMERA]: 'camera',
+					[DeviceType.ROUTER]: 'wifi',
+					[DeviceType.SWITCH]: 'git-branch',
+					[DeviceType.OTHER]: 'ellipsis-horizontal',
+				};
+			return iconMap[type] || 'cube';
+		};
+
+		const deviceIcon = getDeviceIcon(item.type);
+
+		return (
+			<TouchableOpacity
+				onPress={onPress}
+				onPressIn={handlePressIn}
+				onPressOut={handlePressOut}
+				activeOpacity={1}
+				style={{ marginBottom: 12 }}
+			>
+				<Animated.View
+					style={{
+						transform: [{ scale: scaleAnim }],
+					}}
+				>
+					<Card
+						elevate
+						bordered
+						borderColor={AppColors.border}
+						borderRadius="$4"
+						overflow="hidden"
+						padding="$0"
+						backgroundColor={AppColors.surface}
+						shadowColor={AppColors.shadowLight}
+						shadowRadius={8}
+						shadowOffset={{ width: 0, height: 2 }}
+					>
+						{/* Header with gradient effect */}
+						<XStack
+							backgroundColor={AppColors.primary + '08'}
+							padding="$3"
+							justifyContent="space-between"
+							alignItems="center"
+							borderBottomWidth={1}
+							borderBottomColor={AppColors.border}
+						>
+							<XStack gap="$3" alignItems="center" flex={1}>
+								<YStack
+									width={48}
+									height={48}
+									backgroundColor={AppColors.primary + '15'}
+									borderRadius="$3"
+									justifyContent="center"
+									alignItems="center"
+								>
+									<Ionicons
+										name={deviceIcon}
+										size={24}
+										color={AppColors.primary}
+									/>
+								</YStack>
+								<YStack flex={1}>
+									<Text
+										fontSize={16}
+										fontWeight="700"
+										color={AppColors.text}
+										numberOfLines={1}
+									>
+										{item.name}
+									</Text>
+									<Text
+										fontSize={12}
+										color={AppColors.textSecondary}
+									>
+										{item.type}
+									</Text>
+								</YStack>
+							</XStack>
+							<StatusBadge status={item.status} />
+						</XStack>
+
+						{/* Body */}
+						<YStack padding="$3" gap="$2.5">
+							{/* Serial Number */}
+							<XStack
+								gap="$2"
+								alignItems="center"
+								backgroundColor={AppColors.primaryLight + '15'}
+								padding="$2"
+								borderRadius="$3"
+							>
+								<Ionicons
+									name="pricetag"
+									size={16}
+									color={AppColors.primary}
+								/>
+								<Text
+									fontSize={13}
+									color={AppColors.primary}
+									fontWeight="700"
+									flex={1}
+								>
+									{item.serialNumber}
+								</Text>
+							</XStack>
+
+							{/* Brand & Type */}
+							<XStack gap="$2" alignItems="center">
+								<YStack
+									flex={1}
+									backgroundColor={AppColors.background}
+									padding="$2"
+									borderRadius="$2"
+								>
+									<Text
+										fontSize={10}
+										color={AppColors.textMuted}
+									>
+										Thương hiệu
+									</Text>
+									<Text
+										fontSize={13}
+										fontWeight="600"
+										color={AppColors.text}
+									>
+										{item.brand}
+									</Text>
+								</YStack>
+								<YStack
+									flex={1}
+									backgroundColor={AppColors.background}
+									padding="$2"
+									borderRadius="$2"
+								>
+									<Text
+										fontSize={10}
+										color={AppColors.textMuted}
+									>
+										Loại
+									</Text>
+									<Text
+										fontSize={13}
+										fontWeight="600"
+										color={AppColors.text}
+									>
+										{item.type}
+									</Text>
+								</YStack>
+							</XStack>
+
+							{/* Purchase Date */}
+							<XStack gap="$2" alignItems="center">
+								<Ionicons
+									name="calendar"
+									size={14}
+									color={AppColors.textSecondary}
+								/>
+								<Text
+									fontSize={12}
+									color={AppColors.textSecondary}
+								>
+									Mua ngày:{' '}
+									<Text fontWeight="600">
+										{item.purchasedDate
+											? new Date(
+													item.purchasedDate
+												).toLocaleDateString('vi-VN')
+											: 'N/A'}
+									</Text>
+								</Text>
+							</XStack>
+						</YStack>
+
+						{/* Footer with action hint */}
+						<XStack
+							backgroundColor={AppColors.background}
+							padding="$2"
+							justifyContent="center"
+							alignItems="center"
+							borderTopWidth={1}
+							borderTopColor={AppColors.border}
+						>
+							<Text fontSize={11} color={AppColors.textMuted}>
+								Nhấn để xem chi tiết
+							</Text>
+							<Ionicons
+								name="chevron-forward"
+								size={12}
+								color={AppColors.textMuted}
+								style={{ marginLeft: 4 }}
+							/>
+						</XStack>
+					</Card>
+				</Animated.View>
+			</TouchableOpacity>
+		);
+	}
+);
+
 const DeviceScreen = () => {
 	const { deviceData, isLoading, isError, error, onGetAllDevices } =
 		useGetAllDevices();
@@ -308,6 +539,7 @@ const DeviceScreen = () => {
 	const [search, setSearch] = useState('');
 	const [sortOption, setSortOption] = useState<DeviceType>(DeviceType.ALL);
 	const [refreshing, setRefreshing] = useState(false);
+	const [isHeaderExpanded, setIsHeaderExpanded] = useState(true);
 
 	// Filter + Sort logic (correct & performant)
 	const filteredAndSortedData = useMemo(() => {
@@ -361,218 +593,22 @@ const DeviceScreen = () => {
 		onGetAllDevices();
 	}, [onGetAllDevices]);
 
-	// Helper function to get device icon based on type
-	const getDeviceIcon = (
-		type: DeviceType
-	): keyof typeof Ionicons.glyphMap => {
-		const iconMap: Record<DeviceType, keyof typeof Ionicons.glyphMap> = {
-			[DeviceType.ALL]: 'cube',
-			[DeviceType.LAPTOP]: 'laptop',
-			[DeviceType.DESKTOP]: 'desktop',
-			[DeviceType.MONITOR]: 'tv',
-			[DeviceType.TABLET]: 'tablet-portrait',
-			[DeviceType.SMARTPHONE]: 'phone-portrait',
-			[DeviceType.PRINTER]: 'print',
-			[DeviceType.CAMERA]: 'camera',
-			[DeviceType.ROUTER]: 'wifi',
-			[DeviceType.SWITCH]: 'git-branch',
-			[DeviceType.OTHER]: 'ellipsis-horizontal',
-		};
-		return iconMap[type] || 'cube';
-	};
-
-	// Render device card item - matching HomeScreen design
-	const renderDeviceItem = ({ item }: { item: DeviceResponse }) => {
-		const deviceIcon = getDeviceIcon(item.type);
-
-		return (
-			<Pressable
-				onPress={() =>
-					navigation.navigate(NavigationRoutes.DEVICE_DETAIL, {
-						serialNumber: item.serialNumber,
-					})
-				}
-				style={({ pressed }) => [
-					{
-						transform: [{ scale: pressed ? 0.98 : 1 }],
-						opacity: pressed ? 0.9 : 1,
-						transition: 'all 0.4s ease-in-out',
-					},
-				]}
-				android_ripple={{
-					color: AppColors.primary + '20',
-					borderless: false,
-				}}
-			>
-				<Card
-					elevate
-					bordered
-					borderColor={AppColors.border}
-					borderRadius="$4"
-					overflow="hidden"
-					padding="$0"
-					backgroundColor={AppColors.surface}
-					shadowColor={AppColors.shadowLight}
-					shadowRadius={8}
-					shadowOffset={{ width: 0, height: 2 }}
-					marginBottom="$3"
-					pressStyle={{
-						scale: 0.98,
-						borderColor: AppColors.primary,
-						shadowColor: AppColors.primary,
-						shadowRadius: 12,
-					}}
-				>
-					{/* Header with gradient effect */}
-					<XStack
-						backgroundColor={AppColors.primary + '08'}
-						padding="$3"
-						justifyContent="space-between"
-						alignItems="center"
-						borderBottomWidth={1}
-						borderBottomColor={AppColors.border}
-					>
-						<XStack gap="$3" alignItems="center" flex={1}>
-							<YStack
-								width={48}
-								height={48}
-								backgroundColor={AppColors.primary + '15'}
-								borderRadius="$3"
-								justifyContent="center"
-								alignItems="center"
-							>
-								<Ionicons
-									name={deviceIcon}
-									size={24}
-									color={AppColors.primary}
-								/>
-							</YStack>
-							<YStack flex={1}>
-								<Text
-									fontSize={16}
-									fontWeight="700"
-									color={AppColors.text}
-									numberOfLines={1}
-								>
-									{item.name}
-								</Text>
-								<Text
-									fontSize={12}
-									color={AppColors.textSecondary}
-								>
-									{item.type}
-								</Text>
-							</YStack>
-						</XStack>
-						<StatusBadge status={item.status} />
-					</XStack>
-
-					{/* Body */}
-					<YStack padding="$3" gap="$2.5">
-						{/* Serial Number */}
-						<XStack
-							gap="$2"
-							alignItems="center"
-							backgroundColor={AppColors.primaryLight + '15'}
-							padding="$2"
-							borderRadius="$3"
-						>
-							<Ionicons
-								name="pricetag"
-								size={16}
-								color={AppColors.primary}
-							/>
-							<Text
-								fontSize={13}
-								color={AppColors.primary}
-								fontWeight="700"
-								flex={1}
-							>
-								{item.serialNumber}
-							</Text>
-						</XStack>
-
-						{/* Brand & Type */}
-						<XStack gap="$2" alignItems="center">
-							<YStack
-								flex={1}
-								backgroundColor={AppColors.background}
-								padding="$2"
-								borderRadius="$2"
-							>
-								<Text fontSize={10} color={AppColors.textMuted}>
-									Thương hiệu
-								</Text>
-								<Text
-									fontSize={13}
-									fontWeight="600"
-									color={AppColors.text}
-								>
-									{item.brand}
-								</Text>
-							</YStack>
-							<YStack
-								flex={1}
-								backgroundColor={AppColors.background}
-								padding="$2"
-								borderRadius="$2"
-							>
-								<Text fontSize={10} color={AppColors.textMuted}>
-									Loại
-								</Text>
-								<Text
-									fontSize={13}
-									fontWeight="600"
-									color={AppColors.text}
-								>
-									{item.type}
-								</Text>
-							</YStack>
-						</XStack>
-
-						{/* Purchase Date */}
-						<XStack gap="$2" alignItems="center">
-							<Ionicons
-								name="calendar"
-								size={14}
-								color={AppColors.textSecondary}
-							/>
-							<Text fontSize={12} color={AppColors.textSecondary}>
-								Mua ngày:{' '}
-								<Text fontWeight="600">
-									{item.purchasedDate
-										? new Date(
-												item.purchasedDate
-											).toLocaleDateString('vi-VN')
-										: 'N/A'}
-								</Text>
-							</Text>
-						</XStack>
-					</YStack>
-
-					{/* Footer with action hint */}
-					<XStack
-						backgroundColor={AppColors.background}
-						padding="$2"
-						justifyContent="center"
-						alignItems="center"
-						borderTopWidth={1}
-						borderTopColor={AppColors.border}
-					>
-						<Text fontSize={11} color={AppColors.textMuted}>
-							Nhấn để xem chi tiết
-						</Text>
-						<Ionicons
-							name="chevron-forward"
-							size={12}
-							color={AppColors.textMuted}
-							style={{ marginLeft: 4 }}
-						/>
-					</XStack>
-				</Card>
-			</Pressable>
-		);
-	};
+	// Render device card item using DeviceCard component
+	const renderDeviceItem = useCallback(
+		({ item }: { item: DeviceResponse }) => {
+			return (
+				<DeviceCard
+					item={item}
+					onPress={() =>
+						navigation.navigate(NavigationRoutes.DEVICE_DETAIL, {
+							serialNumber: item.serialNumber,
+						})
+					}
+				/>
+			);
+		},
+		[navigation]
+	);
 
 	// Early returns AFTER all hooks
 	if (isError) {
@@ -605,171 +641,230 @@ const DeviceScreen = () => {
 
 	return (
 		<YStack flex={1} backgroundColor={AppColors.background}>
-			{/* Fixed Header Section */}
+			{/* Fixed Header Section with Expandable/Collapsible */}
 			<YStack
 				paddingTop={60}
 				paddingHorizontal={16}
 				backgroundColor={AppColors.background}
-				gap="$3"
 				paddingBottom="$3"
 			>
-				{/* Modern Header with gradient effect */}
-				<XStack justifyContent="space-between" alignItems="center">
-					<YStack gap="$1">
-						<Text
-							fontSize={26}
-							fontWeight="900"
-							color={AppColors.text}
-						>
-							Thiết bị
-						</Text>
-						<Text fontSize={13} color={AppColors.textSecondary}>
-							Quản lý và theo dõi
-						</Text>
-					</YStack>
-					{/* Refresh Button */}
-					<Button
-						circular
-						size="$8"
-						backgroundColor={AppColors.primary + '15'}
-						borderWidth={0}
-						pressStyle={{
-							backgroundColor: AppColors.primary + '25',
-							scale: 0.95,
-						}}
-						onPress={onRefresh}
-						disabled={refreshing}
-						justifyContent="center"
+				{/* Modern Header with Toggle Button */}
+				<TouchableOpacity
+					onPress={() => setIsHeaderExpanded(!isHeaderExpanded)}
+					activeOpacity={0.7}
+				>
+					<XStack
+						justifyContent="space-between"
 						alignItems="center"
+						paddingBottom="$3"
 					>
-						<Ionicons
-							name="refresh"
-							size={28}
-							color={AppColors.primary}
-							style={{
-								transform: [
-									{
-										rotate: refreshing ? '360deg' : '0deg',
-									},
-								],
-							}}
-						/>
-					</Button>
-				</XStack>
-
-				{/* Search */}
-				<InputCombo size="$9" search={search} setSearch={setSearch} />
-
-				{/* Modern Stats Cards with Icons */}
-				<XStack gap="$3">
-					<YStack
-						flex={1}
-						backgroundColor={AppColors.primary}
-						borderRadius="$4"
-						padding="$3"
-						shadowColor={AppColors.primary}
-						shadowRadius={8}
-						shadowOffset={{ width: 0, height: 2 }}
-						elevation={3}
-					>
-						<XStack
-							justifyContent="space-between"
-							alignItems="center"
-						>
-							<YStack gap="$1">
-								<Text fontSize={11} color="white" opacity={0.9}>
-									Tổng số
-								</Text>
-								<Text
-									fontSize={26}
-									fontWeight="900"
-									color="white"
-								>
-									{deviceData?.length || 0}
-								</Text>
-							</YStack>
-							<YStack
-								width={40}
-								height={40}
-								backgroundColor="white"
-								opacity={0.2}
-								borderRadius="$8"
-								justifyContent="center"
-								alignItems="center"
+						<YStack gap="$1" flex={1}>
+							<Text
+								fontSize={26}
+								fontWeight="900"
+								color={AppColors.text}
 							>
-								<Ionicons name="cube" size={22} color="white" />
-							</YStack>
-						</XStack>
-					</YStack>
+								Thiết bị
+							</Text>
+							<Text fontSize={13} color={AppColors.textSecondary}>
+								{isHeaderExpanded
+									? 'Quản lý và theo dõi'
+									: `${filteredAndSortedData.length} thiết bị`}
+							</Text>
+						</YStack>
 
-					<YStack
-						flex={1}
-						backgroundColor={AppColors.info}
-						borderRadius="$4"
-						padding="$3"
-						shadowColor={AppColors.info}
-						shadowRadius={8}
-						shadowOffset={{ width: 0, height: 2 }}
-						elevation={3}
-					>
-						<XStack
-							justifyContent="space-between"
-							alignItems="center"
-						>
-							<YStack gap="$1">
-								<Text fontSize={11} color="white" opacity={0.9}>
-									Đã lọc
-								</Text>
-								<Text
-									fontSize={26}
-									fontWeight="900"
-									color="white"
-								>
-									{filteredAndSortedData.length}
-								</Text>
-							</YStack>
-							<YStack
-								width={40}
-								height={40}
-								backgroundColor="white"
-								opacity={0.2}
-								borderRadius="$8"
+						<XStack gap="$2" alignItems="center">
+							{/* Refresh Button */}
+							<Button
+								circular
+								size="$8"
+								backgroundColor={AppColors.primary + '15'}
+								borderWidth={0}
+								pressStyle={{
+									backgroundColor: AppColors.primary + '25',
+									scale: 0.95,
+								}}
+								onPress={(e) => {
+									e.stopPropagation();
+									onRefresh();
+								}}
+								disabled={refreshing}
 								justifyContent="center"
 								alignItems="center"
 							>
 								<Ionicons
-									name="funnel"
-									size={22}
-									color="white"
+									name="refresh"
+									size={24}
+									color={AppColors.primary}
+									style={{
+										transform: [
+											{
+												rotate: refreshing
+													? '360deg'
+													: '0deg',
+											},
+										],
+									}}
+								/>
+							</Button>
+
+							{/* Expand/Collapse Button */}
+							<YStack
+								width={44}
+								height={44}
+								backgroundColor={AppColors.primary + '15'}
+								borderRadius="$10"
+								justifyContent="center"
+								alignItems="center"
+							>
+								<Ionicons
+									name={
+										isHeaderExpanded
+											? 'chevron-up'
+											: 'chevron-down'
+									}
+									size={24}
+									color={AppColors.primary}
 								/>
 							</YStack>
 						</XStack>
-					</YStack>
-				</XStack>
-
-				{/* Filter Section */}
-				{!isLoading && (
-					<XStack
-						justifyContent="space-between"
-						alignItems="center"
-						paddingVertical="$2"
-					>
-						<Text
-							fontSize={15}
-							fontWeight="700"
-							color={AppColors.text}
-						>
-							{sortOption === DeviceType.ALL
-								? 'Tất cả thiết bị'
-								: `Loại: ${sortOption}`}
-						</Text>
-						<SortDropdown
-							sortOption={sortOption}
-							setSortOption={setSortOption}
-							deviceTypeIcons={deviceTypeIcons}
-							onChange={setSortOption}
-						/>
 					</XStack>
+				</TouchableOpacity>
+
+				{/* Expandable Content */}
+				{isHeaderExpanded && (
+					<YStack gap="$3">
+						{/* Search */}
+						<InputCombo
+							size="$9"
+							search={search}
+							setSearch={setSearch}
+						/>
+
+						{/* Modern Stats Cards with Icons */}
+						<XStack gap="$3">
+							<YStack
+								flex={1}
+								backgroundColor={AppColors.primary}
+								borderRadius="$4"
+								padding="$3"
+								shadowColor={AppColors.primary}
+								shadowRadius={8}
+								shadowOffset={{ width: 0, height: 2 }}
+								elevation={3}
+							>
+								<XStack
+									justifyContent="space-between"
+									alignItems="center"
+								>
+									<YStack gap="$1">
+										<Text
+											fontSize={11}
+											color="white"
+											opacity={0.9}
+										>
+											Tổng số
+										</Text>
+										<Text
+											fontSize={26}
+											fontWeight="900"
+											color="white"
+										>
+											{deviceData?.length || 0}
+										</Text>
+									</YStack>
+									<YStack
+										width={40}
+										height={40}
+										backgroundColor="white"
+										opacity={0.2}
+										borderRadius="$8"
+										justifyContent="center"
+										alignItems="center"
+									>
+										<Ionicons
+											name="cube"
+											size={22}
+											color="white"
+										/>
+									</YStack>
+								</XStack>
+							</YStack>
+
+							<YStack
+								flex={1}
+								backgroundColor={AppColors.info}
+								borderRadius="$4"
+								padding="$3"
+								shadowColor={AppColors.info}
+								shadowRadius={8}
+								shadowOffset={{ width: 0, height: 2 }}
+								elevation={3}
+							>
+								<XStack
+									justifyContent="space-between"
+									alignItems="center"
+								>
+									<YStack gap="$1">
+										<Text
+											fontSize={11}
+											color="white"
+											opacity={0.9}
+										>
+											Đã lọc
+										</Text>
+										<Text
+											fontSize={26}
+											fontWeight="900"
+											color="white"
+										>
+											{filteredAndSortedData.length}
+										</Text>
+									</YStack>
+									<YStack
+										width={40}
+										height={40}
+										backgroundColor="white"
+										opacity={0.2}
+										borderRadius="$8"
+										justifyContent="center"
+										alignItems="center"
+									>
+										<Ionicons
+											name="funnel"
+											size={22}
+											color="white"
+										/>
+									</YStack>
+								</XStack>
+							</YStack>
+						</XStack>
+
+						{/* Filter Section */}
+						{!isLoading && (
+							<XStack
+								justifyContent="space-between"
+								alignItems="center"
+								paddingVertical="$2"
+							>
+								<Text
+									fontSize={15}
+									fontWeight="700"
+									color={AppColors.text}
+								>
+									{sortOption === DeviceType.ALL
+										? 'Tất cả thiết bị'
+										: `Loại: ${sortOption}`}
+								</Text>
+								<SortDropdown
+									sortOption={sortOption}
+									setSortOption={setSortOption}
+									deviceTypeIcons={deviceTypeIcons}
+									onChange={setSortOption}
+								/>
+							</XStack>
+						)}
+					</YStack>
 				)}
 			</YStack>
 

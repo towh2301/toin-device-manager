@@ -7,7 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { DeviceResponse, DeviceStatus } from '@services/device/types';
 import React, { useMemo } from 'react';
-import { FlatList } from 'react-native';
+import { FlatList, TouchableOpacity } from 'react-native';
 import { Button, Card, Separator, Text, XStack, YStack } from 'tamagui';
 
 const statusLabels: Record<DeviceStatus, string> = {
@@ -47,6 +47,8 @@ const HomeScreen = () => {
 	} = useGetAllDevices();
 	const navigation = useNavigation<any>();
 	const { user } = useAuthStore();
+
+	const [isStatsExpanded, setIsStatsExpanded] = React.useState(true);
 
 	const stats = useMemo(() => {
 		if (!deviceData) {
@@ -109,25 +111,9 @@ const HomeScreen = () => {
 		};
 
 		return (
-			<Card
+			<TouchableOpacity
 				key={item.id}
-				padding="$0"
-				bordered
-				backgroundColor={AppColors.surface}
-				borderColor={AppColors.border}
-				borderWidth={1}
-				shadowColor={AppColors.shadowLight}
-				shadowRadius={8}
-				shadowOffset={{ width: 0, height: 3 }}
-				elevation={4}
-				pressStyle={{
-					scale: 0.98,
-					borderColor: AppColors.primary,
-					shadowRadius: 12,
-				}}
-				animation="quick"
-				borderRadius="$5"
-				overflow="hidden"
+				activeOpacity={0.7}
 				onPress={() =>
 					navigation.navigate(NavigationRoutes.DEVICE, {
 						screen: NavigationRoutes.DEVICE_DETAIL,
@@ -135,152 +121,167 @@ const HomeScreen = () => {
 					})
 				}
 			>
-				{/* Header with gradient-like effect */}
-				<XStack
-					backgroundColor={AppColors.primary + '08'}
-					padding="$3"
-					borderBottomWidth={1}
-					borderBottomColor={AppColors.border}
+				<Card
+					padding="$0"
+					bordered
+					backgroundColor={AppColors.surface}
+					borderColor={AppColors.border}
+					borderWidth={1}
+					shadowColor={AppColors.shadowLight}
+					shadowRadius={8}
+					shadowOffset={{ width: 0, height: 3 }}
+					elevation={4}
+					animation="quick"
+					borderRadius="$5"
+					overflow="hidden"
 				>
-					<XStack gap="$3" alignItems="center" flex={1}>
-						{/* Device Icon with gradient background */}
-						<YStack
-							width={48}
-							height={48}
-							backgroundColor={AppColors.primary}
-							borderRadius="$4"
-							justifyContent="center"
+					{/* Header with gradient-like effect */}
+					<XStack
+						backgroundColor={AppColors.primary + '08'}
+						padding="$3"
+						borderBottomWidth={1}
+						borderBottomColor={AppColors.border}
+					>
+						<XStack gap="$3" alignItems="center" flex={1}>
+							{/* Device Icon with gradient background */}
+							<YStack
+								width={48}
+								height={48}
+								backgroundColor={AppColors.primary}
+								borderRadius="$4"
+								justifyContent="center"
+								alignItems="center"
+								shadowColor={AppColors.primary}
+								shadowRadius={8}
+								shadowOffset={{ width: 0, height: 2 }}
+								elevation={3}
+							>
+								<Ionicons
+									name={getDeviceIcon(item.type)}
+									size={24}
+									color="white"
+								/>
+							</YStack>
+
+							{/* Device Name & Status */}
+							<YStack flex={1} gap="$1">
+								<Text
+									fontSize={16}
+									fontWeight="800"
+									color={AppColors.text}
+									numberOfLines={1}
+								>
+									{item.name}
+								</Text>
+								<StatusBadge status={item.status} />
+							</YStack>
+						</XStack>
+					</XStack>
+
+					{/* Body */}
+					<YStack padding="$3" gap="$2.5">
+						{/* Serial Number */}
+						<XStack
+							gap="$2"
 							alignItems="center"
-							shadowColor={AppColors.primary}
-							shadowRadius={8}
-							shadowOffset={{ width: 0, height: 2 }}
-							elevation={3}
+							backgroundColor={AppColors.primaryLight + '15'}
+							padding="$2"
+							borderRadius="$3"
 						>
 							<Ionicons
-								name={getDeviceIcon(item.type)}
-								size={24}
-								color="white"
+								name="pricetag"
+								size={16}
+								color={AppColors.primary}
 							/>
-						</YStack>
-
-						{/* Device Name & Status */}
-						<YStack flex={1} gap="$1">
 							<Text
-								fontSize={16}
-								fontWeight="800"
-								color={AppColors.text}
-								numberOfLines={1}
+								fontSize={13}
+								color={AppColors.primary}
+								fontWeight="700"
+								flex={1}
 							>
-								{item.name}
+								{item.serialNumber}
 							</Text>
-							<StatusBadge status={item.status} />
-						</YStack>
-					</XStack>
-				</XStack>
+						</XStack>
 
-				{/* Body */}
-				<YStack padding="$3" gap="$2.5">
-					{/* Serial Number */}
+						{/* Brand & Type */}
+						<XStack gap="$2" alignItems="center">
+							<YStack
+								flex={1}
+								backgroundColor={AppColors.background}
+								padding="$2"
+								borderRadius="$2"
+							>
+								<Text fontSize={10} color={AppColors.textMuted}>
+									Thương hiệu
+								</Text>
+								<Text
+									fontSize={13}
+									fontWeight="600"
+									color={AppColors.text}
+								>
+									{item.brand}
+								</Text>
+							</YStack>
+							<YStack
+								flex={1}
+								backgroundColor={AppColors.background}
+								padding="$2"
+								borderRadius="$2"
+							>
+								<Text fontSize={10} color={AppColors.textMuted}>
+									Loại
+								</Text>
+								<Text
+									fontSize={13}
+									fontWeight="600"
+									color={AppColors.text}
+								>
+									{item.type}
+								</Text>
+							</YStack>
+						</XStack>
+
+						{/* Purchase Date */}
+						<XStack gap="$2" alignItems="center">
+							<Ionicons
+								name="calendar"
+								size={14}
+								color={AppColors.textSecondary}
+							/>
+							<Text fontSize={12} color={AppColors.textSecondary}>
+								Mua ngày:{' '}
+								<Text fontWeight="600">
+									{item.purchasedDate
+										? new Date(
+												item.purchasedDate
+											).toLocaleDateString('vi-VN')
+										: 'N/A'}
+								</Text>
+							</Text>
+						</XStack>
+					</YStack>
+
+					{/* Footer with action hint */}
 					<XStack
-						gap="$2"
-						alignItems="center"
-						backgroundColor={AppColors.primaryLight + '15'}
+						backgroundColor={AppColors.background}
 						padding="$2"
-						borderRadius="$3"
+						justifyContent="center"
+						alignItems="center"
+						borderTopWidth={1}
+						borderTopColor={AppColors.border}
+						gap="$1"
 					>
-						<Ionicons
-							name="pricetag"
-							size={16}
-							color={AppColors.primary}
-						/>
-						<Text
-							fontSize={13}
-							color={AppColors.primary}
-							fontWeight="700"
-							flex={1}
-						>
-							{item.serialNumber}
+						<Text fontSize={11} color={AppColors.textMuted}>
+							Nhấn để xem chi tiết
 						</Text>
-					</XStack>
-
-					{/* Brand & Type */}
-					<XStack gap="$2" alignItems="center">
-						<YStack
-							flex={1}
-							backgroundColor={AppColors.background}
-							padding="$2"
-							borderRadius="$2"
-						>
-							<Text fontSize={10} color={AppColors.textMuted}>
-								Thương hiệu
-							</Text>
-							<Text
-								fontSize={13}
-								fontWeight="600"
-								color={AppColors.text}
-							>
-								{item.brand}
-							</Text>
-						</YStack>
-						<YStack
-							flex={1}
-							backgroundColor={AppColors.background}
-							padding="$2"
-							borderRadius="$2"
-						>
-							<Text fontSize={10} color={AppColors.textMuted}>
-								Loại
-							</Text>
-							<Text
-								fontSize={13}
-								fontWeight="600"
-								color={AppColors.text}
-							>
-								{item.type}
-							</Text>
-						</YStack>
-					</XStack>
-
-					{/* Purchase Date */}
-					<XStack gap="$2" alignItems="center">
 						<Ionicons
-							name="calendar"
-							size={14}
-							color={AppColors.textSecondary}
+							name="chevron-forward"
+							size={12}
+							color={AppColors.textMuted}
 						/>
-						<Text fontSize={12} color={AppColors.textSecondary}>
-							Mua ngày:{' '}
-							<Text fontWeight="600">
-								{item.purchasedDate
-									? new Date(
-											item.purchasedDate
-										).toLocaleDateString('vi-VN')
-									: 'N/A'}
-							</Text>
-						</Text>
 					</XStack>
-				</YStack>
-
-				{/* Footer with action hint */}
-				<XStack
-					backgroundColor={AppColors.background}
-					padding="$2"
-					justifyContent="center"
-					alignItems="center"
-					borderTopWidth={1}
-					borderTopColor={AppColors.border}
-					gap="$1"
-				>
-					<Text fontSize={11} color={AppColors.textMuted}>
-						Nhấn để xem chi tiết
-					</Text>
-					<Ionicons
-						name="chevron-forward"
-						size={12}
-						color={AppColors.textMuted}
-					/>
-				</XStack>
-			</Card>
+				</Card>
+			</TouchableOpacity>
 		);
 	};
 	return (
@@ -328,153 +329,212 @@ const HomeScreen = () => {
 					</YStack>
 				</Card>
 
-				{/* Stats Cards - Thiết kế mới */}
+				{/* Stats Cards - Thiết kế mới với Expandable */}
 				<YStack gap="$2">
-					<Text fontSize={18} fontWeight="700" color={AppColors.text}>
-						Thống kê thiết bị
-					</Text>
-					<XStack gap="$3" flexWrap="wrap">
-						{/* Total Card */}
-						<Card
-							padding="$4"
-							bordered
-							flex={1}
-							minWidth="100%"
-							backgroundColor={AppColors.primary}
-							borderColor={AppColors.primaryDark}
-							borderWidth={0}
-							shadowColor={AppColors.shadowMedium}
-							shadowRadius={10}
-							shadowOffset={{ width: 0, height: 3 }}
-							elevation={4}
-							borderRadius="$4"
+					<TouchableOpacity
+						onPress={() => setIsStatsExpanded(!isStatsExpanded)}
+						activeOpacity={0.7}
+					>
+						<XStack
+							justifyContent="space-between"
+							alignItems="center"
+							paddingBottom="$2"
 						>
-							<XStack
-								justifyContent="space-between"
-								alignItems="center"
-							>
-								<YStack gap="$1" flex={1}>
-									<Text
-										fontSize={14}
-										color="white"
-										opacity={0.95}
-									>
-										Tổng thiết bị
-									</Text>
-									<Text
-										fontSize={40}
-										fontWeight="900"
-										color="white"
-										lineHeight={44}
-									>
-										{stats.total}
-									</Text>
+							<YStack flex={1}>
+								<Text
+									fontSize={18}
+									fontWeight="700"
+									color={AppColors.text}
+								>
+									Thống kê thiết bị
+								</Text>
+								{!isStatsExpanded && (
 									<Text
 										fontSize={12}
-										color="white"
-										opacity={0.85}
+										color={AppColors.textSecondary}
 									>
-										{isFetching
-											? '⟳ Đang đồng bộ...'
-											: '✓ Đã cập nhật'}
+										{stats.total} thiết bị • Nhấn để xem chi
+										tiết
 									</Text>
-								</YStack>
-								<YStack
-									width={70}
-									height={70}
-									backgroundColor="white"
-									opacity={0.2}
-									borderRadius="$10"
-									justifyContent="center"
+								)}
+							</YStack>
+							<YStack
+								width={36}
+								height={36}
+								backgroundColor={AppColors.primary + '15'}
+								borderRadius="$8"
+								justifyContent="center"
+								alignItems="center"
+							>
+								<Ionicons
+									name={
+										isStatsExpanded
+											? 'chevron-up'
+											: 'chevron-down'
+									}
+									size={20}
+									color={AppColors.primary}
+								/>
+							</YStack>
+						</XStack>
+					</TouchableOpacity>
+
+					{isStatsExpanded && (
+						<XStack gap="$3" flexWrap="wrap">
+							{/* Total Card */}
+							<Card
+								padding="$4"
+								bordered
+								flex={1}
+								minWidth="100%"
+								backgroundColor={AppColors.primary}
+								borderColor={AppColors.primaryDark}
+								borderWidth={0}
+								shadowColor={AppColors.shadowMedium}
+								shadowRadius={10}
+								shadowOffset={{ width: 0, height: 3 }}
+								elevation={4}
+								borderRadius="$4"
+							>
+								<XStack
+									justifyContent="space-between"
 									alignItems="center"
 								>
-									<Ionicons
-										name="apps"
-										size={40}
-										color="white"
-									/>
-								</YStack>
-							</XStack>
-						</Card>
-
-						{/* Status Cards */}
-						{Object.entries(stats.byStatus).map(([key, val]) => {
-							const statusKey = key as DeviceStatus;
-							const colors = statusColors[statusKey];
-							const statusIcons: Record<
-								DeviceStatus,
-								keyof typeof Ionicons.glyphMap
-							> = {
-								[DeviceStatus.AVAILABLE]:
-									'checkmark-circle-outline',
-								[DeviceStatus.IN_USE]: 'time-outline',
-								[DeviceStatus.MAINTENANCE]: 'construct-outline',
-								[DeviceStatus.RETIREMENT]:
-									'close-circle-outline',
-							};
-							return (
-								<Card
-									key={key}
-									padding="$4"
-									bordered
-									flex={1}
-									minWidth="47%"
-									backgroundColor={colors.bg}
-									borderColor={colors.text + '20'}
-									borderWidth={1.5}
-									shadowColor={AppColors.shadowLight}
-									shadowRadius={6}
-									shadowOffset={{ width: 0, height: 2 }}
-									elevation={2}
-									borderRadius="$4"
-								>
-									<YStack gap="$2">
-										<XStack
-											justifyContent="space-between"
-											alignItems="flex-start"
+									<YStack gap="$1" flex={1}>
+										<Text
+											fontSize={14}
+											color="white"
+											opacity={0.95}
 										>
-											<YStack gap="$1" flex={1}>
-												<Text
-													fontSize={12}
-													color={colors.text}
-													opacity={0.85}
-													fontWeight="600"
-												>
-													{statusLabels[statusKey]}
-												</Text>
-												<Text
-													fontSize={28}
-													fontWeight="900"
-													color={colors.text}
-													lineHeight={32}
-												>
-													{val}
-												</Text>
-											</YStack>
-											<YStack
-												width={38}
-												height={38}
-												backgroundColor={
-													colors.text + '20'
-												}
-												borderRadius="$8"
-												justifyContent="center"
-												alignItems="center"
-											>
-												<Ionicons
-													name={
-														statusIcons[statusKey]
-													}
-													size={20}
-													color={colors.text}
-												/>
-											</YStack>
-										</XStack>
+											Tổng thiết bị
+										</Text>
+										<Text
+											fontSize={40}
+											fontWeight="900"
+											color="white"
+											lineHeight={44}
+										>
+											{stats.total}
+										</Text>
+										<Text
+											fontSize={12}
+											color="white"
+											opacity={0.85}
+										>
+											{isFetching
+												? '⟳ Đang đồng bộ...'
+												: '✓ Đã cập nhật'}
+										</Text>
 									</YStack>
-								</Card>
-							);
-						})}
-					</XStack>
+									<YStack
+										width={70}
+										height={70}
+										backgroundColor="white"
+										opacity={0.2}
+										borderRadius="$10"
+										justifyContent="center"
+										alignItems="center"
+									>
+										<Ionicons
+											name="apps"
+											size={40}
+											color="white"
+										/>
+									</YStack>
+								</XStack>
+							</Card>
+
+							{/* Status Cards */}
+							{Object.entries(stats.byStatus).map(
+								([key, val]) => {
+									const statusKey = key as DeviceStatus;
+									const colors = statusColors[statusKey];
+									const statusIcons: Record<
+										DeviceStatus,
+										keyof typeof Ionicons.glyphMap
+									> = {
+										[DeviceStatus.AVAILABLE]:
+											'checkmark-circle-outline',
+										[DeviceStatus.IN_USE]: 'time-outline',
+										[DeviceStatus.MAINTENANCE]:
+											'construct-outline',
+										[DeviceStatus.RETIREMENT]:
+											'close-circle-outline',
+									};
+									return (
+										<Card
+											key={key}
+											padding="$4"
+											bordered
+											flex={1}
+											minWidth="47%"
+											backgroundColor={colors.bg}
+											borderColor={colors.text + '20'}
+											borderWidth={1.5}
+											shadowColor={AppColors.shadowLight}
+											shadowRadius={6}
+											shadowOffset={{
+												width: 0,
+												height: 2,
+											}}
+											elevation={2}
+											borderRadius="$4"
+										>
+											<YStack gap="$2">
+												<XStack
+													justifyContent="space-between"
+													alignItems="flex-start"
+												>
+													<YStack gap="$1" flex={1}>
+														<Text
+															fontSize={12}
+															color={colors.text}
+															opacity={0.85}
+															fontWeight="600"
+														>
+															{
+																statusLabels[
+																	statusKey
+																]
+															}
+														</Text>
+														<Text
+															fontSize={28}
+															fontWeight="900"
+															color={colors.text}
+															lineHeight={32}
+														>
+															{val}
+														</Text>
+													</YStack>
+													<YStack
+														width={38}
+														height={38}
+														backgroundColor={
+															colors.text + '20'
+														}
+														borderRadius="$8"
+														justifyContent="center"
+														alignItems="center"
+													>
+														<Ionicons
+															name={
+																statusIcons[
+																	statusKey
+																]
+															}
+															size={20}
+															color={colors.text}
+														/>
+													</YStack>
+												</XStack>
+											</YStack>
+										</Card>
+									);
+								}
+							)}
+						</XStack>
+					)}
 				</YStack>
 
 				<Separator borderColor={AppColors.border} />
