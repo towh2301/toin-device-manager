@@ -119,7 +119,7 @@ export default function DeviceDetailScreen() {
 				{/* Header with Back Button */}
 				<XStack alignItems="center" gap="$3" marginBottom="$2">
 					<Button
-						size="$3"
+						size="$8"
 						circular
 						chromeless
 						icon={ArrowLeft}
@@ -198,7 +198,10 @@ export default function DeviceDetailScreen() {
 						</YStack>
 						<XStack gap="$2" alignItems="center">
 							<StatusBadge status={deviceData.status} />
-							<TypeBadge type={deviceData.type} />
+							<TypeBadge
+								type={deviceData.type}
+								backgroundColor={AppColors.infoLight}
+							/>
 						</XStack>
 					</YStack>
 				</Card>
@@ -350,6 +353,7 @@ export default function DeviceDetailScreen() {
 							scale: 0.97,
 						}}
 						onPress={copySN}
+						height={'40'}
 					>
 						Sao chép SN
 					</Button>
@@ -367,6 +371,7 @@ export default function DeviceDetailScreen() {
 							scale: 0.97,
 						}}
 						onPress={shareInfo}
+						height={'40'}
 					>
 						Chia sẻ
 					</Button>

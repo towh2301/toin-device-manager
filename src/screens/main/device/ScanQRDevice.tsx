@@ -1,9 +1,17 @@
 // src/screens/main/device/ScanQRDevice.tsx
+import { AppColors } from '@/src/common/app-color';
 import { NavigationRoutes } from '@/src/navigation/types';
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { DeviceResponse } from '@services/device/types';
 import { useGetAllDevices } from '@services/device/useGetAllDevices';
+import {
+	ArrowLeft,
+	CheckCircle2,
+	Copy,
+	QrCode,
+	ScanLine,
+} from '@tamagui/lucide-icons';
 import type { BarcodeType } from 'expo-camera';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as Clipboard from 'expo-clipboard';
@@ -15,17 +23,14 @@ import {
 	TouchableOpacity,
 	View,
 } from 'react-native';
-import {
-	GestureHandlerRootView,
-	PanGestureHandlerGestureEvent,
-} from 'react-native-gesture-handler';
 import Animated, {
-	runOnJS,
 	useAnimatedStyle,
 	useSharedValue,
-	withSpring,
+	withRepeat,
+	withSequence,
+	withTiming,
 } from 'react-native-reanimated';
-import { Text, XStack, YStack } from 'tamagui';
+import { Button, Text, XStack, YStack } from 'tamagui';
 
 export default function QrScanScreen() {
 	const [permission, requestPermission] = useCameraPermissions();
@@ -34,31 +39,22 @@ export default function QrScanScreen() {
 	const navigation = useNavigation<any>();
 	const { deviceData } = useGetAllDevices();
 
-	// Thêm vào đầu component
-	const translateY = useSharedValue(0);
+	// Animation for scanning line
+	const scanLineY = useSharedValue(0);
 
-	const gestureHandler = (event: PanGestureHandlerGestureEvent) => {
-		const { translationY } = event.nativeEvent;
-		if (translationY > 0) {
-			translateY.value = translationY;
-		}
+	useEffect(() => {
+		scanLineY.value = withRepeat(
+			withSequence(
+				withTiming(220, { duration: 2000 }),
+				withTiming(0, { duration: 2000 })
+			),
+			-1,
+			false
+		);
+	}, []);
 
-		if (event.nativeEvent.state === 5) {
-			// Bỏ tay
-			if (translationY > 100) {
-				translateY.value = withSpring(500, { damping: 20 }, () => {
-					runOnJS(setScanned)(false);
-					runOnJS(setScannedData)('');
-				});
-			} else {
-				translateY.value = withSpring(0);
-			}
-		}
-	};
-
-	const animatedStyle = useAnimatedStyle(() => ({
-		transform: [{ translateY: translateY.value }],
-		opacity: 1 - translateY.value / 500,
+	const scanLineStyle = useAnimatedStyle(() => ({
+		transform: [{ translateY: scanLineY.value }],
 	}));
 
 	const barcodeScannerSettings = {
@@ -91,63 +87,37 @@ export default function QrScanScreen() {
 			);
 
 			if (found) {
-				Alert.alert(
-					'Thiết bị được tìm thấy!',
-					`${found.name}\nThương hiệu: ${found.brand || 'Không rõ'} \nLoại: ${found.type || 'Không rõ'} \nSerial: ${found.serialNumber || 'Không rõ'} \nNgày mua: ${
-						found.purchasedDate
-							? new Date(found.purchasedDate).toLocaleDateString(
-									'vi-VN',
-									{
-										day: '2-digit',
-										month: '2-digit',
-										year: 'numeric',
-									}
-								)
-							: 'Không rõ'
-					}`,
-					[
-						{
-							text: 'Hủy',
-							style: 'cancel',
-							onPress: () => setScanned(false),
-						},
-						{
-							text: 'Xem chi tiết',
-							style: 'default',
-							onPress: () => {
-								setScanned(false);
-								navigation.navigate(
-									NavigationRoutes.DEVICE_DETAIL,
-									{
-										serialNumber: found.serialNumber,
-									}
-								);
-							},
-						},
-					],
-					{ cancelable: false }
-				);
+				setTimeout(() => {
+					navigation.navigate(NavigationRoutes.DEVICE_DETAIL, {
+						serialNumber: found.serialNumber,
+					});
+					setScanned(false);
+					setScannedData('');
+				}, 800);
 			} else {
-				Alert.alert(
-					'Không tìm thấy thiết bị',
-					`Không có thiết bị nào khớp với:\n"${qrText}"\n\nBạn có thể thử tìm thủ công trong danh sách.`,
-					[
-						{ text: 'Quét lại', onPress: () => setScanned(false) },
-						{
-							text: 'Về danh sách',
-							onPress: () => navigation.goBack(),
-						},
-					]
-				);
+				setTimeout(() => {
+					Alert.alert(
+						'❌ Không tìm thấy',
+						`Không có thiết bị nào khớp với:\n"${qrText}"`,
+						[
+							{
+								text: 'Quét lại',
+								onPress: () => {
+									setScanned(false);
+									setScannedData('');
+								},
+							},
+							{
+								text: 'Về danh sách',
+								onPress: () => navigation.goBack(),
+							},
+						]
+					);
+				}, 500);
 			}
 		},
 		[scanned, safeDeviceData, navigation]
 	);
-
-	// NÚT BACK HOẠT ĐỘNG THẬT
-	const handleGoBack = () => {
-		navigation.goBack();
-	};
 
 	// Permission denied
 	if (!permission) {
@@ -156,9 +126,9 @@ export default function QrScanScreen() {
 				flex={1}
 				justifyContent="center"
 				alignItems="center"
-				backgroundColor="#000"
+				backgroundColor={AppColors.background}
 			>
-				<Text color="white" fontSize={18}>
+				<Text color={AppColors.text} fontSize={16}>
 					Đang xin quyền camera...
 				</Text>
 			</YStack>
@@ -171,149 +141,187 @@ export default function QrScanScreen() {
 				flex={1}
 				justifyContent="center"
 				alignItems="center"
-				backgroundColor="#000"
+				backgroundColor={AppColors.background}
 				padding="$6"
 				gap="$4"
-				position="absolute"
-				zIndex={1000}
 			>
-				<MaterialCommunityIcons
-					name="camera-off"
-					size={80}
-					color="#ff4444"
-				/>
+				<YStack
+					width={120}
+					height={120}
+					borderRadius={60}
+					backgroundColor={AppColors.dangerLight + '30'}
+					alignItems="center"
+					justifyContent="center"
+					marginBottom="$4"
+				>
+					<MaterialCommunityIcons
+						name="camera-off"
+						size={60}
+						color={AppColors.danger}
+					/>
+				</YStack>
 				<Text
-					color="white"
-					fontSize={22}
-					fontWeight="700"
+					color={AppColors.text}
+					fontSize={24}
+					fontWeight="800"
 					textAlign="center"
 				>
-					Cần quyền truy cập Camera
+					Cần quyền Camera
 				</Text>
-				<Text color="#ccc" textAlign="center" fontSize={16}>
-					Vui lòng bật camera để quét mã QR thiết bị
+				<Text
+					color={AppColors.textSecondary}
+					textAlign="center"
+					fontSize={15}
+				>
+					Vui lòng cấp quyền camera để quét mã QR thiết bị
 				</Text>
-				<TouchableOpacity
-					style={styles.settingsBtn}
+				<Button
+					size="$4"
+					backgroundColor={AppColors.primary}
+					color="white"
+					fontWeight="700"
+					borderRadius="$10"
+					marginTop="$4"
+					paddingHorizontal="$6"
 					onPress={() => Linking.openSettings()}
 				>
-					<Text color="white" fontWeight="700" fontSize={18}>
-						Mở Cài đặt
-					</Text>
-				</TouchableOpacity>
+					Mở Cài đặt
+				</Button>
 			</YStack>
 		);
 	}
 
 	return (
-		<GestureHandlerRootView style={{ flex: 1 }}>
-			<YStack flex={1} backgroundColor="#000">
-				{/* NÚT BACK SIÊU ĐẸP + HOẠT ĐỘNG */}
-				<XStack
-					position="absolute"
-					top={50}
-					left={16}
-					zIndex={999}
-					backgroundColor="rgba(0,0,0,0.6)"
-					paddingHorizontal="$3"
-					paddingVertical="$2"
-					borderRadius={30}
-					borderWidth={1}
-					borderColor="rgba(255,255,255,0.2)"
-				>
-					<TouchableOpacity onPress={handleGoBack} hitSlop={20}>
-						<Ionicons name="arrow-back" size={32} color="white" />
-					</TouchableOpacity>
-				</XStack>
+		<YStack flex={1} backgroundColor="#000">
+			{/* CAMERA */}
+			<CameraView
+				style={StyleSheet.absoluteFillObject}
+				facing="back"
+				onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
+				barcodeScannerSettings={barcodeScannerSettings}
+			/>
 
-				{/* CAMERA */}
-				<CameraView
-					style={StyleSheet.absoluteFillObject}
-					facing="back"
-					onBarcodeScanned={
-						scanned ? undefined : handleBarCodeScanned
-					}
-					barcodeScannerSettings={barcodeScannerSettings}
-				/>
-
-				{/* OVERLAY */}
-				<View style={styles.overlay}>
-					<View style={styles.frame}>
-						{[0, 1, 2, 3].map((i) => (
-							<View
-								key={i}
-								style={[
-									styles.corner,
-									styles[
-										`c${i}` as 'c0' | 'c1' | 'c2' | 'c3'
-									],
-								]}
-							/>
-						))}
-					</View>
-
-					<Text style={styles.guide}>Đưa mã QR vào khung</Text>
-
-					{/* NÚT QUÉT LẠI
-				{scanned && (
-					<TouchableOpacity
-						style={styles.rescanBtn}
-						onPress={() => {
-							setScanned(false);
-							setScannedData('');
+			{/* TOP BAR với Back Button */}
+			<YStack
+				position="absolute"
+				top={0}
+				left={0}
+				right={0}
+				paddingTop={50}
+				paddingHorizontal={20}
+				paddingBottom={20}
+				backgroundColor="rgba(0,0,0,0.4)"
+				zIndex={10}
+			>
+				<XStack alignItems="center" justifyContent="space-between">
+					<Button
+						size="$3"
+						circular
+						chromeless
+						icon={ArrowLeft}
+						backgroundColor="rgba(255,255,255,0.95)"
+						pressStyle={{
+							backgroundColor: 'rgba(255,255,255,0.8)',
+							scale: 0.95,
 						}}
-					>
-						<Ionicons
-							name="qr-code-outline"
-							size={32}
-							color="white"
-						/>
-						<Text style={styles.rescanText}>Quét lại</Text>
-					</TouchableOpacity>
-				)} */}
-				</View>
-
-				{/* KẾT QUẢ HIỂN THỊ DƯỚI ĐÁY */}
-				{scannedData && (
-					<Animated.View style={[styles.resultBox, animatedStyle]}>
-						{/* ICON CHECK */}
-						<Ionicons
-							name="checkmark-circle"
-							size={28}
-							color="#4CAF50"
-						/>
-
-						{/* SERIAL NUMBER */}
-						<Text style={styles.resultText} numberOfLines={2}>
-							{scannedData}
+						onPress={() => navigation.goBack()}
+					/>
+					<YStack alignItems="center">
+						<Text color="white" fontSize={20} fontWeight="800">
+							Quét mã QR
 						</Text>
+						<Text color="rgba(255,255,255,0.7)" fontSize={13}>
+							Đưa mã vào khung quét
+						</Text>
+					</YStack>
+					<YStack width={40} />
+				</XStack>
+			</YStack>
 
-						{/* NÚT COPY */}
+			{/* SCANNING FRAME */}
+			<View style={styles.overlay}>
+				<View style={styles.frame}>
+					{/* Corner borders */}
+					<View style={[styles.corner, styles.topLeft]} />
+					<View style={[styles.corner, styles.topRight]} />
+					<View style={[styles.corner, styles.bottomLeft]} />
+					<View style={[styles.corner, styles.bottomRight]} />
+
+					{/* Animated scanning line */}
+					{!scanned && (
+						<Animated.View style={[styles.scanLine, scanLineStyle]}>
+							<ScanLine
+								size={280}
+								color={AppColors.primary}
+								strokeWidth={3}
+							/>
+						</Animated.View>
+					)}
+				</View>
+			</View>
+
+			{/* RESULT BOX */}
+			{scannedData && (
+				<View style={styles.resultBox}>
+					<XStack
+						alignItems="center"
+						gap="$3"
+						backgroundColor={AppColors.success}
+						padding="$4"
+						borderRadius="$10"
+					>
+						<CheckCircle2 size={28} color="white" />
+						<YStack flex={1}>
+							<Text color="white" fontSize={13} fontWeight="600">
+								Đã quét thành công
+							</Text>
+							<Text
+								color="white"
+								fontSize={16}
+								fontWeight="800"
+								numberOfLines={1}
+							>
+								{scannedData}
+							</Text>
+						</YStack>
 						<TouchableOpacity
 							onPress={async () => {
-								Clipboard.setString(scannedData);
+								await Clipboard.setStringAsync(scannedData);
 								Alert.alert(
-									'Đã sao chép!',
+									'✓ Đã sao chép',
 									'Serial đã vào clipboard'
 								);
 							}}
-							hitSlop={10}
+							style={{
+								backgroundColor: 'rgba(255,255,255,0.2)',
+								padding: 10,
+								borderRadius: 8,
+							}}
 						>
-							<Ionicons
-								name="copy-outline"
-								size={26}
-								color="#007AFF"
-							/>
+							<Copy size={20} color="white" />
 						</TouchableOpacity>
+					</XStack>
+				</View>
+			)}
 
-						{/* VUỐT XUỐNG ĐỂ ĐÓNG */}
-						<View style={styles.swipeHandle}>
-							<View style={styles.swipeBar} />
-						</View>
-					</Animated.View>
-				)}
-			</YStack>
-		</GestureHandlerRootView>
+			{/* BOTTOM INFO */}
+			<View style={styles.bottomInfo}>
+				<XStack
+					alignItems="center"
+					justifyContent="center"
+					gap="$2"
+					backgroundColor="rgba(0,0,0,0.6)"
+					paddingVertical="$3"
+					paddingHorizontal="$5"
+					borderRadius="$10"
+				>
+					<QrCode size={20} color="white" />
+					<Text color="white" fontSize={14} fontWeight="600">
+						Tổng số thiết bị: {deviceData?.length || 0}
+					</Text>
+				</XStack>
+			</View>
+		</YStack>
 	);
 }
 
@@ -327,87 +335,65 @@ const styles = StyleSheet.create({
 		width: 280,
 		height: 280,
 		position: 'relative',
+		overflow: 'hidden',
 	},
 	corner: {
 		position: 'absolute',
-		width: 70,
-		height: 70,
-		borderColor: '#00E676',
-		borderWidth: 9,
+		width: 50,
+		height: 50,
+		borderColor: AppColors.primary,
+		borderWidth: 5,
 	},
-	c0: { top: -4, left: -4, borderRightWidth: 0, borderBottomWidth: 0 },
-	c1: { top: -4, right: -4, borderLeftWidth: 0, borderBottomWidth: 0 },
-	c2: { bottom: -4, left: -4, borderRightWidth: 0, borderTopWidth: 0 },
-	c3: { bottom: -4, right: -4, borderLeftWidth: 0, borderTopWidth: 0 },
-	guide: {
-		marginTop: 60,
-		color: 'white',
-		fontSize: 22,
-		fontWeight: '800',
-		textShadowColor: 'rgba(0,0,0,0.9)',
-		textShadowOffset: { width: 2, height: 2 },
-		textShadowRadius: 6,
+	topLeft: {
+		top: 0,
+		left: 0,
+		borderRightWidth: 0,
+		borderBottomWidth: 0,
+		borderTopLeftRadius: 20,
 	},
-	rescanBtn: {
-		marginTop: 70,
-		backgroundColor: '#007AFF',
-		flexDirection: 'row',
-		alignItems: 'center',
-		paddingHorizontal: 36,
-		paddingVertical: 20,
-		borderRadius: 40,
-		gap: 16,
-		elevation: 20,
-		shadowColor: '#007AFF',
-		shadowOpacity: 0.5,
-		shadowRadius: 10,
+	topRight: {
+		top: 0,
+		right: 0,
+		borderLeftWidth: 0,
+		borderBottomWidth: 0,
+		borderTopRightRadius: 20,
 	},
-	rescanText: {
-		color: 'white',
-		fontSize: 20,
-		fontWeight: '700',
+	bottomLeft: {
+		bottom: 0,
+		left: 0,
+		borderRightWidth: 0,
+		borderTopWidth: 0,
+		borderBottomLeftRadius: 20,
 	},
-	resultText: {
-		fontSize: 18,
-		fontWeight: '600',
-		color: '#111',
-		flex: 1,
+	bottomRight: {
+		bottom: 0,
+		right: 0,
+		borderLeftWidth: 0,
+		borderTopWidth: 0,
+		borderBottomRightRadius: 20,
 	},
-	settingsBtn: {
-		backgroundColor: '#007AFF',
-		paddingHorizontal: 50,
-		paddingVertical: 18,
-		borderRadius: 20,
-		elevation: 10,
+	scanLine: {
+		width: 280,
+		position: 'absolute',
+		top: 0,
+		left: 0,
 	},
 	resultBox: {
 		position: 'absolute',
 		bottom: 140,
-		left: 24,
-		right: 24,
-		backgroundColor: 'rgba(255,255,255,0.97)',
-		padding: 20,
-		borderRadius: 24,
-		flexDirection: 'row',
-		alignItems: 'center',
-		gap: 14,
-		elevation: 25,
+		left: 20,
+		right: 20,
+		elevation: 20,
 		shadowColor: '#000',
-		shadowOffset: { width: 0, height: 12 },
-		shadowOpacity: 0.35,
-		shadowRadius: 25,
+		shadowOffset: { width: 0, height: 10 },
+		shadowOpacity: 0.4,
+		shadowRadius: 20,
 	},
-	swipeHandle: {
+	bottomInfo: {
 		position: 'absolute',
-		top: 8,
+		bottom: 40,
 		left: 0,
 		right: 0,
 		alignItems: 'center',
-	},
-	swipeBar: {
-		width: 44,
-		height: 5,
-		backgroundColor: '#ccc',
-		borderRadius: 3,
 	},
 });

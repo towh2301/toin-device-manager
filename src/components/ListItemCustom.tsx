@@ -113,7 +113,10 @@ export const CustomListItem = ({
 						alignItems="center"
 						width="100%"
 					>
-						<TypeBadge type={type} />
+						<TypeBadge
+							type={type}
+							backgroundColor={AppColors.infoLight}
+						/>
 						<StatusBadge status={status} />
 					</XStack>
 
@@ -170,7 +173,7 @@ export default function CustomList({
 			keyExtractor={(item) => item.id}
 			contentContainerStyle={{
 				alignItems: 'center',
-				paddingBottom: 110, // tránh đè bởi bottom bar
+				paddingBottom: 128, // tránh đè bởi bottom bar
 			}}
 			ItemSeparatorComponent={() => <YStack height={12} />}
 			showsVerticalScrollIndicator={false}
@@ -188,6 +191,7 @@ export default function CustomList({
 					titleColor={AppColors.textSecondary}
 				/>
 			}
+			// ListHeaderComponent={<HeaderComponent />}
 		/>
 	);
 }

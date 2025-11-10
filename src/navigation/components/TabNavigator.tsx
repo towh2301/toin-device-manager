@@ -28,6 +28,27 @@ const TabNavigator = () => {
 				name={NavigationRoutes.DEVICE}
 				component={DeviceNavigator}
 				options={{ tabBarLabel: 'Devices' }}
+				listeners={({ navigation }) => ({
+					tabPress: (e) => {
+						const state = navigation.getState();
+						const tabRoute = state.routes.find(
+							(r) => r.name === NavigationRoutes.DEVICE
+						);
+						const isFocused = navigation.isFocused();
+
+						// Nếu tab đang được focus lại thì reset stack về DeviceList
+						if (
+							isFocused &&
+							tabRoute?.state?.index !== undefined &&
+							tabRoute.state.index > 0
+						) {
+							e.preventDefault();
+							navigation.navigate(NavigationRoutes.DEVICE, {
+								screen: NavigationRoutes.DEVICE_LIST,
+							});
+						}
+					},
+				})}
 			/>
 			<Tab.Screen
 				name={NavigationRoutes.TOIN_USER}

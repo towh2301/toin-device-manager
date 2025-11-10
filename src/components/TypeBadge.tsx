@@ -4,9 +4,15 @@ import { AppColors } from '../common/app-color';
 import { DeviceType } from '../services/device/types';
 
 // --- TYPE BADGE ---
-export const TypeBadge = ({ type }: { type: DeviceType }) => (
+export const TypeBadge = ({
+	type,
+	backgroundColor,
+}: {
+	type: DeviceType;
+	backgroundColor: string;
+}) => (
 	<XStack
-		backgroundColor={AppColors.primaryLight + '15'} // 15 = ~8% opacity
+		backgroundColor={backgroundColor} // 15 = ~8% opacity
 		borderRadius="$8"
 		paddingHorizontal="$3"
 		paddingVertical="$1.5"

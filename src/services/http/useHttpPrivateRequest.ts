@@ -46,11 +46,14 @@ async function performRefresh(
 	const storedRefresh = await AsyncStorage.getItem('refresh_token');
 	if (!storedRefresh) throw new Error('Missing refresh_token');
 
-	// Call refresh endpoint – try both payload key variants
+	console.log('🔄 [Refresh] Attempting to refresh token...');
+
+	// Call refresh endpoint – only send refresh_token (not token)
 	const response = await axios.post(`${baseURL}/auth/refresh`, {
-		token: storedRefresh,
 		refresh_token: storedRefresh,
 	});
+
+	console.log('✅ [Refresh] Response:', response.data);
 
 	// Try multiple shapes: response.data.result.*, response.data.data.*, or direct top-level
 	const container =
@@ -63,6 +66,7 @@ async function performRefresh(
 		extract(response.data, ['refresh_token', 'refreshToken']);
 
 	if (!access || !refresh) {
+		console.error('❌ [Refresh] Invalid token structure:', response.data);
 		throw new Error('Refresh response did not contain new tokens');
 	}
 
@@ -70,6 +74,7 @@ async function performRefresh(
 		['access_token', access],
 		['refresh_token', refresh],
 	]);
+	console.log('✅ [Refresh] Tokens updated successfully');
 	return { access, refresh };
 }
 
@@ -113,12 +118,11 @@ export const useHttpPrivateRequest = ({
 				return Promise.reject(error);
 			}
 
-			if (error.response.status === 401) {
-				// Avoid infinite loop
-				if (originalRequest._retry) {
-					return Promise.reject(error);
-				}
+			if (error.response.status === 401 && !originalRequest._retry) {
 				originalRequest._retry = true;
+				console.log(
+					'🔒 Authentication failed, attempting token refresh...'
+				);
 
 				try {
 					if (isRefreshing) {
@@ -137,11 +141,13 @@ export const useHttpPrivateRequest = ({
 						`Bearer ${access}`;
 					return privateApiInstance!(originalRequest);
 				} catch (refreshError) {
+					console.error('❌ [Refresh] Failed:', refreshError);
 					processRefreshQueue(refreshError, null);
 					await AsyncStorage.multiRemove([
 						'access_token',
 						'refresh_token',
 					]);
+					console.log('🚪 Logging out user due to refresh failure');
 					onAuthFailure?.();
 					return Promise.reject(refreshError);
 				} finally {
