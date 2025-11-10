@@ -1,3 +1,6 @@
+import { AppColors } from '@/src/common/app-color';
+import { StatusBadge } from '@/src/components/StatusBadge';
+import { NavigationRoutes } from '@/src/navigation/types';
 import { useNavigation } from '@react-navigation/native';
 import { DeviceStatus } from '@services/device/types';
 import { useGetAllDevices } from '@services/device/useGetAllDevices';
@@ -17,6 +20,25 @@ const statusLabels: Record<DeviceStatus, string> = {
 	[DeviceStatus.IN_USE]: 'Đang dùng',
 	[DeviceStatus.MAINTENANCE]: 'Bảo trì',
 	[DeviceStatus.RETIREMENT]: 'Ngưng dùng',
+};
+
+const statusColors: Record<DeviceStatus, { bg: string; text: string }> = {
+	[DeviceStatus.AVAILABLE]: {
+		bg: AppColors.successLight,
+		text: AppColors.successDark,
+	},
+	[DeviceStatus.IN_USE]: {
+		bg: AppColors.infoLight,
+		text: AppColors.infoDark,
+	},
+	[DeviceStatus.MAINTENANCE]: {
+		bg: AppColors.warningLight,
+		text: AppColors.warningDark,
+	},
+	[DeviceStatus.RETIREMENT]: {
+		bg: '#F3F4F6',
+		text: '#6B7280',
+	},
 };
 
 const HomeScreen = () => {
@@ -44,107 +66,288 @@ const HomeScreen = () => {
 	}, [deviceData]);
 
 	return (
-		<ScrollView contentContainerStyle={{ padding: 16 }}>
+		<ScrollView
+			backgroundColor={AppColors.background}
+			contentContainerStyle={{
+				paddingHorizontal: 16,
+				paddingTop: 46,
+				paddingBottom: 140,
+			}}
+		>
 			<YStack gap="$4">
-				<Text fontSize={26} fontWeight="700">
-					Dashboard thiết bị
-				</Text>
+				{/* Header */}
+				<YStack gap="$2">
+					<Text fontSize={28} fontWeight="800" color={AppColors.text}>
+						TOIN DASHBOARD
+					</Text>
+					<Text fontSize={14} color={AppColors.textSecondary}>
+						Quản lý thiết bị của bạn
+					</Text>
+				</YStack>
+
+				{/* Stats Cards */}
 				<XStack gap="$3" flexWrap="wrap">
-					<Card padding="$4" bordered width="48%" theme="blue">
-						<Text fontSize={14} color="$color8">
-							Tổng thiết bị
-						</Text>
-						<Text fontSize={24} fontWeight="700">
-							{stats.total}
-						</Text>
-						<Text fontSize={12} color="$color8">
-							{isFetching ? 'Đang đồng bộ...' : 'Cập nhật'}
-						</Text>
+					{/* Total Card */}
+					<Card
+						padding="$4"
+						bordered
+						width="48%"
+						backgroundColor={AppColors.primary}
+						borderColor={AppColors.primaryDark}
+						borderWidth={0}
+						shadowColor={AppColors.shadowMedium}
+						shadowRadius={8}
+						shadowOffset={{ width: 0, height: 2 }}
+						elevation={3}
+					>
+						<YStack gap="$1">
+							<Text fontSize={13} color="white" opacity={0.9}>
+								Tổng thiết bị
+							</Text>
+							<Text fontSize={32} fontWeight="900" color="white">
+								{stats.total}
+							</Text>
+							<Text fontSize={11} color="white" opacity={0.8}>
+								{isFetching
+									? '⟳ Đang đồng bộ...'
+									: '✓ Cập nhật'}
+							</Text>
+						</YStack>
 					</Card>
-					{Object.entries(stats.byStatus).map(([key, val]) => (
-						<Card
-							key={key}
-							padding="$4"
-							bordered
-							width="48%"
-							theme="green"
-						>
-							<Text fontSize={14}>
-								{statusLabels[key as DeviceStatus]}
-							</Text>
-							<Text fontSize={20} fontWeight="700">
-								{val}
-							</Text>
-						</Card>
-					))}
+
+					{/* Status Cards */}
+					{Object.entries(stats.byStatus).map(([key, val]) => {
+						const statusKey = key as DeviceStatus;
+						const colors = statusColors[statusKey];
+						return (
+							<Card
+								key={key}
+								padding="$4"
+								bordered
+								width="48%"
+								backgroundColor={colors.bg}
+								borderColor={colors.text + '30'}
+								borderWidth={1}
+								shadowColor={AppColors.shadowLight}
+								shadowRadius={4}
+								shadowOffset={{ width: 0, height: 1 }}
+								elevation={2}
+							>
+								<YStack gap="$1">
+									<Text
+										fontSize={12}
+										color={colors.text}
+										opacity={0.8}
+									>
+										{statusLabels[statusKey]}
+									</Text>
+									<Text
+										fontSize={24}
+										fontWeight="800"
+										color={colors.text}
+									>
+										{val}
+									</Text>
+								</YStack>
+							</Card>
+						);
+					})}
 				</XStack>
 
-				<Separator />
+				<Separator borderColor={AppColors.border} />
 
+				{/* Recent Devices Section */}
 				<XStack justifyContent="space-between" alignItems="center">
-					<Text fontSize={20} fontWeight="600">
-						Thiết bị mới nhất
-					</Text>
-					<Button size="$3" onPress={() => onGetAllDevices()}>
+					<YStack>
+						<Text
+							fontSize={20}
+							fontWeight="700"
+							color={AppColors.text}
+						>
+							Thiết bị mới nhất
+						</Text>
+						<Text fontSize={13} color={AppColors.textSecondary}>
+							6 thiết bị gần đây
+						</Text>
+					</YStack>
+					<Button
+						size="$3"
+						backgroundColor={AppColors.primaryLight}
+						color="white"
+						pressStyle={{
+							backgroundColor: AppColors.primary,
+							scale: 0.95,
+						}}
+						borderRadius="$8"
+						fontWeight="600"
+						onPress={() => onGetAllDevices()}
+						height="auto"
+					>
 						Làm mới
 					</Button>
 				</XStack>
-				{isLoading && <Text>Đang tải...</Text>}
-				{isError && <Text color="red">{error?.message}</Text>}
+
+				{isLoading && (
+					<Text color={AppColors.textSecondary}>Đang tải...</Text>
+				)}
+				{isError && (
+					<Text color={AppColors.danger}>{error?.message}</Text>
+				)}
+
+				{/* Device List */}
 				<YStack gap="$3">
 					{deviceData.slice(0, 6).map((d) => (
 						<Card
 							key={d.id}
-							padding="$3"
+							padding="$4"
 							bordered
+							backgroundColor={AppColors.surface}
+							borderColor={AppColors.border}
+							borderWidth={1}
+							shadowColor={AppColors.shadowLight}
+							shadowRadius={4}
+							shadowOffset={{ width: 0, height: 1 }}
+							elevation={2}
+							pressStyle={{
+								scale: 0.98,
+								borderColor: AppColors.primary,
+							}}
+							animation="quick"
 							onPress={() =>
-								navigation.navigate('DeviceDetail', {
-									device: d,
+								navigation.navigate(NavigationRoutes.DEVICE, {
+									screen: NavigationRoutes.DEVICE_DETAIL,
+									params: { serialNumber: d.serialNumber },
 								})
 							}
 						>
 							<XStack
 								justifyContent="space-between"
-								alignItems="center"
+								alignItems="flex-start"
 							>
-								<YStack>
-									<Text fontWeight="600">{d.name}</Text>
-									<Text fontSize={12} color="$color8">
+								<YStack flex={1} gap="$2">
+									<Text
+										fontSize={16}
+										fontWeight="700"
+										color={AppColors.text}
+										numberOfLines={1}
+									>
+										{d.name}
+									</Text>
+									<Text
+										fontSize={13}
+										color={AppColors.primary}
+										fontWeight="600"
+									>
 										SN: {d.serialNumber}
 									</Text>
+									<XStack
+										gap="$2"
+										alignItems="center"
+										flexWrap="wrap"
+									>
+										<Text
+											fontSize={12}
+											color={AppColors.textSecondary}
+										>
+											{d.brand}
+										</Text>
+										<Text
+											fontSize={12}
+											color={AppColors.textMuted}
+										>
+											•
+										</Text>
+										<Text
+											fontSize={12}
+											color={AppColors.textSecondary}
+										>
+											{d.type}
+										</Text>
+									</XStack>
+									<Text
+										fontSize={11}
+										color={AppColors.textMuted}
+									>
+										Ngày mua:{' '}
+										{d.purchasedDate
+											? new Date(
+													d.purchasedDate
+												).toLocaleDateString('vi-VN', {
+													day: '2-digit',
+													month: '2-digit',
+													year: 'numeric',
+												})
+											: 'N/A'}
+									</Text>
 								</YStack>
-								<Text fontSize={11} color="$color9">
-									{statusLabels[d.status]}
-								</Text>
+								<StatusBadge status={d.status} />
 							</XStack>
 						</Card>
 					))}
 				</YStack>
 
-				<Separator />
-				<Text fontSize={20} fontWeight="600">
-					Tác vụ nhanh
-				</Text>
-				<XStack gap="$3" flexWrap="wrap">
-					<Button
-						theme="active"
-						onPress={() => navigation.navigate('Device')}
-					>
-						Quản lý thiết bị
-					</Button>
-					<Button
-						theme="blue"
-						onPress={() => navigation.navigate('ScanQR')}
-					>
-						Quét QR
-					</Button>
-					<Button
-						theme="green"
-						onPress={() => navigation.navigate('DeviceCreate')}
-					>
-						Thêm thiết bị
-					</Button>
-				</XStack>
+				<Separator borderColor={AppColors.border} />
+
+				{/* Quick Actions */}
+				<YStack gap="$3">
+					<Text fontSize={20} fontWeight="700" color={AppColors.text}>
+						Tác vụ nhanh
+					</Text>
+					<XStack gap="$3" flexWrap="wrap">
+						<Button
+							flex={1}
+							minWidth={150}
+							size="$4"
+							backgroundColor={AppColors.primary}
+							color="white"
+							pressStyle={{
+								backgroundColor: AppColors.primaryDark,
+								scale: 0.97,
+							}}
+							borderRadius="$10"
+							fontWeight="700"
+							fontSize={15}
+							icon={
+								<Text fontSize={18} color="white">
+									📱
+								</Text>
+							}
+							onPress={() =>
+								navigation.navigate(NavigationRoutes.DEVICE)
+							}
+							height={30}
+						>
+							Quản lý thiết bị
+						</Button>
+						<Button
+							flex={1}
+							minWidth={150}
+							size="$4"
+							backgroundColor={AppColors.info}
+							color="white"
+							pressStyle={{
+								backgroundColor: AppColors.infoDark,
+								scale: 0.97,
+							}}
+							borderRadius="$10"
+							fontWeight="700"
+							fontSize={15}
+							icon={
+								<Text fontSize={18} color="white">
+									📷
+								</Text>
+							}
+							onPress={() =>
+								navigation.navigate(NavigationRoutes.DEVICE, {
+									screen: NavigationRoutes.QR_SCAN,
+								})
+							}
+							height="auto"
+						>
+							Quét QR
+						</Button>
+					</XStack>
+				</YStack>
 			</YStack>
 		</ScrollView>
 	);

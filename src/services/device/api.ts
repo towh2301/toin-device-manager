@@ -59,6 +59,17 @@ const useDeviceApi = (baseURL = API_URL) => {
 		}
 	};
 
+	const getDeviceBySerialNumber = async (serialNumber: string) => {
+		const endpoint = `/devices/serial/${serialNumber}`;
+		try {
+			const { data } =
+				await privateApi.get<ApiResponseType<DeviceResponse>>(endpoint);
+			return data;
+		} catch (error) {
+			handleAxiosError(error, endpoint, baseURL);
+		}
+	};
+
 	const updateDevice = async (id: string, payload: DeviceUpdatePayload) => {
 		const endpoint = `/devices/${id}`;
 		try {
@@ -101,6 +112,7 @@ const useDeviceApi = (baseURL = API_URL) => {
 		updateDevice,
 		deleteDevice,
 		generateQrCode,
+		getDeviceBySerialNumber,
 	};
 };
 

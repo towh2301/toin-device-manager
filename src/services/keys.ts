@@ -15,8 +15,9 @@ export enum API_KEYS {
 
 	// Devices
 	ALL_DEVICES = 'devices',
-	DEVICE_DETAILS = 'device_details/:id',
+	DEVICE_DETAILS = 'device_details',
 	DEVICE_BY_ID = 'device_by_id',
+	DEVICE_BY_SERIAL_NUMBER = 'device_by_serial_number',
 	DEVICE_BY_CATEGORY = 'device_by_category',
 	DEVICE_BY_SEARCH = 'device_by_search',
 }

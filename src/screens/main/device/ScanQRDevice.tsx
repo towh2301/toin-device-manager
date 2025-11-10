@@ -1,14 +1,15 @@
 // src/screens/main/device/ScanQRDevice.tsx
+import { NavigationRoutes } from '@/src/navigation/types';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { DeviceResponse } from '@services/device/types';
 import { useGetAllDevices } from '@services/device/useGetAllDevices';
 import type { BarcodeType } from 'expo-camera';
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import * as Clipboard from 'expo-clipboard';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
 	Alert,
-	Clipboard,
 	Linking,
 	StyleSheet,
 	TouchableOpacity,
@@ -26,7 +27,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Text, XStack, YStack } from 'tamagui';
 
-export default function ScanQRDevice() {
+export default function QrScanScreen() {
 	const [permission, requestPermission] = useCameraPermissions();
 	const [scanned, setScanned] = useState(false);
 	const [scannedData, setScannedData] = useState('');
@@ -115,9 +116,12 @@ export default function ScanQRDevice() {
 							style: 'default',
 							onPress: () => {
 								setScanned(false);
-								navigation.navigate('DeviceDetail', {
-									device: found,
-								});
+								navigation.navigate(
+									NavigationRoutes.DEVICE_DETAIL,
+									{
+										serialNumber: found.serialNumber,
+									}
+								);
 							},
 						},
 					],

@@ -21,7 +21,7 @@ export enum NavigationRoutes {
 	DEVICE_DETAIL = 'DeviceDetailScreen',
 	DEVICE_CREATE = 'DeviceCreateScreen',
 	DEVICE_EDIT = 'DeviceEditScreen',
-	QR_SCAN = 'QRScanScreen',
+	QR_SCAN = 'QrScanScreen',
 
 	// Software Management Screens
 	SOFTWARE_LIST = 'SoftwareListScreen',
@@ -66,14 +66,12 @@ export type ToinUserStackParamList = {
 
 // Device stack parameter list
 export type DeviceStackParamList = {
-	[NavigationRoutes.DEVICE]: undefined;
 	[NavigationRoutes.DEVICE_LIST]: { serialNumber?: string } | undefined;
 	[NavigationRoutes.DEVICE_DETAIL]: {
-		deviceId: string;
-		//navigator: NavigatorScreenParams<DeviceDetailStackParamList>;
+		serialNumber: string;
 	};
 	[NavigationRoutes.DEVICE_CREATE]: undefined;
-	[NavigationRoutes.DEVICE_EDIT]: { deviceId: string };
+	[NavigationRoutes.DEVICE_EDIT]: { serialNumber: string };
 	[NavigationRoutes.QR_SCAN]: undefined;
 };
 

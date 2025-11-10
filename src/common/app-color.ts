@@ -4,60 +4,59 @@
  */
 
 export const AppColors = {
-	// Brand Colors
+	// Brand Colors - Primary Palette
+	primary: '#0A3D62', // Deep Navy/Dark Blue - Main brand color
+	primaryLight: '#2F6C97', // Lighter navy for hover states
+	primaryDark: '#082E4A', // Darker navy for pressed states
 
-	/** * The primary brand color, derived from TOIN's logo (Dark Blue/Navy).
-	 * Used for main buttons, headers, and active states.
-	 */
-	primary: '#0A3D62', // A deep Navy/Dark Blue
+	// Brand Colors - Secondary Palette
+	secondary: '#29667E', // Muted blue-grey
+	secondaryLight: '#6C757D', // Light grey for borders
 
-	/**
-	 * A lighter shade of the primary color, suitable for button hover states or accents.
-	 */
-	primaryLight: '#2F6C97',
+	// Background Colors
+	background: '#F8FAFC', // Off-white background
+	surface: '#FFFFFF', // Pure white for cards
+	surfaceElevated: '#F1F5F9', // Slightly elevated surface
 
-	/**
-	 * A neutral color for secondary elements like borders, inactive text, or background elements.
-	 * Hex: #6C757D (Standard gray)
-	 */
-	secondary: '#6C757D',
+	// Text Colors
+	text: '#1E293B', // Almost black for primary text
+	textSecondary: '#64748B', // Grey for secondary text
+	textMuted: '#94A3B8', // Light grey for muted text
 
-	// UI/Semantic Colors
+	// Border Colors
+	border: '#E2E8F0', // Light border
+	borderDark: '#CBD5E1', // Darker border for emphasis
 
-	/**
-	 * Main background color for light theme.
-	 */
-	background: '#FFFFFF',
+	// Status Colors
+	success: '#10B981', // Modern green
+	successLight: '#D1FAE5', // Light green background
+	successDark: '#059669', // Dark green for text
 
-	/**
-	 * Secondary background color for elevated surfaces (cards, sidebars).
-	 */
-	surface: '#F4F7F9',
+	danger: '#EF4444', // Modern red
+	dangerLight: '#FEE2E2', // Light red background
+	dangerDark: '#DC2626', // Dark red for text
 
-	/**
-	 * Color for primary text (used against light backgrounds).
-	 */
-	text: '#212529',
+	warning: '#F59E0B', // Modern amber
+	warningLight: '#FEF3C7', // Light amber background
+	warningDark: '#D97706', // Dark amber for text
 
-	// Status Colors (Standard UI Conventions)
+	info: '#3B82F6', // Modern blue
+	infoLight: '#DBEAFE', // Light blue background
+	infoDark: '#2563EB', // Dark blue for text
 
-	/**
-	 * Indicates success or a positive action (Green).
-	 */
-	success: '#28A745',
+	// Device Status Colors (Semantic)
+	available: '#10B981', // Green - ready to use
+	inUse: '#3B82F6', // Blue - currently being used
+	maintenance: '#F59E0B', // Amber - under maintenance
+	retired: '#6B7280', // Grey - no longer in service
 
-	/**
-	 * Indicates danger, errors, or a destructive action (Red).
-	 */
-	danger: '#DC3545',
+	// Accent Colors
+	accent1: '#8B5CF6', // Purple
+	accent2: '#EC4899', // Pink
+	accent3: '#14B8A6', // Teal
 
-	/**
-	 * Indicates a warning or an alert (Yellow/Orange).
-	 */
-	warning: '#FFC107',
-
-	/**
-	 * Indicates informative content (Light Blue).
-	 */
-	info: '#17A2B8',
+	// Shadows
+	shadowLight: 'rgba(10, 61, 98, 0.08)',
+	shadowMedium: 'rgba(10, 61, 98, 0.12)',
+	shadowDark: 'rgba(10, 61, 98, 0.16)',
 };

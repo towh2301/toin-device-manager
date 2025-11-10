@@ -4,7 +4,7 @@ import { NavigationRoutes } from '@/src/navigation/types';
 import { DeviceType } from '@/src/services/device/types';
 import { useGetAllDevices } from '@/src/services/device/useGetAllDevices';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from 'expo-router';
+import { useNavigation } from '@react-navigation/native';
 import React, { useCallback, useMemo, useState } from 'react';
 import {
 	Animated,
@@ -23,7 +23,7 @@ export function InputCombo(props: {
 	setSearch?: (value: string) => void;
 	onSearchPress?: () => void;
 }) {
-	const navigation = useNavigation<DeviceScreenNavigationProp>();
+	const navigation = useNavigation<any>();
 
 	return (
 		<XStack
@@ -55,7 +55,11 @@ export function InputCombo(props: {
 				shadowRadius={5}
 				shadowOpacity={0.2}
 				shadowOffset={{ width: 0, height: 2 }}
-				onPress={() => navigation.navigate(NavigationRoutes.QR_SCAN)}
+				onPress={() =>
+					navigation.navigate(NavigationRoutes.DEVICE, {
+						screen: NavigationRoutes.QR_SCAN,
+					})
+				}
 			>
 				<Ionicons name="qr-code" size={20} color={AppColors.primary} />
 			</Button>
@@ -313,7 +317,7 @@ const DeviceScreen = () => {
 			);
 			if (found) {
 				navigation.navigate(NavigationRoutes.DEVICE_DETAIL, {
-					deviceId: found.id,
+					serialNumber: found.serialNumber,
 				});
 			}
 		},
@@ -350,6 +354,7 @@ const DeviceScreen = () => {
 						data={filteredAndSortedData}
 						refreshing={refreshing}
 						onRefresh={onRefresh}
+						viewDetail={onViewDeviceDetail}
 					/>
 				</>
 			)}

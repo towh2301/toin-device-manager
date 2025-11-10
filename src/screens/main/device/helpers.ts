@@ -3,8 +3,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 type DeviceScreenNavigationProp = NativeStackNavigationProp<
 	DeviceStackParamList,
-	NavigationRoutes.DEVICE_LIST,
-	NavigationRoutes.DEVICE_DETAIL
+	NavigationRoutes.DEVICE_LIST
 >;
 
 export type { DeviceScreenNavigationProp };

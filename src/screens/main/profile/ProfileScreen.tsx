@@ -1,32 +1,32 @@
+import { AppColors } from '@/src/common/app-color';
 import { useAuthStore } from '@/src/store';
 import avatar from '@assets/images/person.png';
 import { IdCard, LogOut, Mail, Shield, User } from '@tamagui/lucide-icons';
 import React from 'react';
-import { Image } from 'react-native';
+import { Alert, ScrollView } from 'react-native';
 import {
+	Avatar,
 	Button,
-	H3,
-	ListItem,
+	Card,
 	Separator,
 	Spinner,
 	Text,
-	YGroup,
+	XStack,
 	YStack,
 } from 'tamagui';
 
-// Có thể dùng @tanstack/react-query cho thao tác logout nếu cần gọi API
-// Ví dụ: import { useMutation } from '@tanstack/react-query';
-// Hoặc chỉ đơn giản là gọi hàm logout từ AuthContext.
-
 const ProfileScreen = () => {
-	// Lấy thông tin người dùng và hàm đăng xuất từ Context
 	const { user, signOut } = useAuthStore();
 
-	// 💡 Nếu bạn muốn gọi API Logout, bạn sẽ bọc hàm logout
-	// bên trong một useMutation và xử lý trạng thái loading/error tại đây.
-
 	const handleLogout = () => {
-		signOut();
+		Alert.alert('Đăng xuất', 'Bạn có chắc chắn muốn đăng xuất không?', [
+			{ text: 'Hủy', style: 'cancel' },
+			{
+				text: 'Đăng xuất',
+				style: 'destructive',
+				onPress: () => signOut(),
+			},
+		]);
 	};
 
 	if (!user) {
@@ -37,100 +37,240 @@ const ProfileScreen = () => {
 				alignItems="center"
 				justifyContent="center"
 				gap="$4"
+				backgroundColor={AppColors.background}
 			>
-				<Spinner size="large" color="$blue10" />
-				<Text>Đang tải hồ sơ...</Text>
+				<Spinner size="large" color={AppColors.primary} />
+				<Text color={AppColors.textSecondary}>Đang tải hồ sơ...</Text>
 			</YStack>
 		);
 	}
 
 	return (
-		// YStack là View của Tamagui (theo chiều dọc)
-		<YStack
-			flex={1}
-			padding="$4"
-			backgroundColor="$backgroundSoft"
-			alignContent="center"
-			justifyContent="center"
-			gap="$4"
+		<ScrollView
+			style={{
+				flex: 1,
+				backgroundColor: AppColors.background,
+			}}
+			contentContainerStyle={{
+				paddingHorizontal: 16,
+				paddingTop: 60,
+				paddingBottom: 140,
+			}}
 		>
-			<H3 textAlign="center" marginBottom="$5" color="$color12">
-				👤 Hồ Sơ Người Dùng
-			</H3>
-			<YStack
-				alignSelf="center"
-				justifyContent="center"
-				alignItems="center"
-				width={150}
-				height={150} // Add height to make it truly circular
-				borderRadius={9999}
-				overflow="hidden"
-				borderWidth={1}
-				borderColor="$primary" // Use Tamagui token
-				backgroundColor="$gray8"
-				marginBottom={30}
-			>
-				{/* <Image
-					source={require('../../assets/images/avatar.png')}
-					width="100%"
-					height="100%"
-					objectFit="cover" // Better than objectFit="contain" for avatars
-				/> */}
-				<Image
-					source={avatar}
-					style={{ width: '100%', height: '100%' }}
-					resizeMode="cover"
-				/>
+			<YStack gap="$4">
+				{/* Header */}
+				<YStack gap="$2" marginBottom="$3">
+					<Text fontSize={13} color={AppColors.textMuted}>
+						Hồ sơ cá nhân
+					</Text>
+					<Text fontSize={28} fontWeight="800" color={AppColors.text}>
+						Tài khoản
+					</Text>
+				</YStack>
+
+				{/* Avatar Card */}
+				<Card
+					bordered={false}
+					padding="$5"
+					backgroundColor={AppColors.surface}
+					borderRadius="$10"
+					shadowColor={AppColors.shadowLight}
+					shadowRadius={8}
+					shadowOffset={{ width: 0, height: 3 }}
+					elevation={3}
+				>
+					<YStack alignItems="center" gap="$4">
+						<YStack
+							width={100}
+							height={100}
+							borderRadius={50}
+							borderWidth={4}
+							borderColor={AppColors.primary}
+							overflow="hidden"
+							shadowColor={AppColors.shadowMedium}
+							shadowRadius={12}
+							shadowOffset={{ width: 0, height: 4 }}
+							elevation={5}
+						>
+							<Avatar circular size="$10">
+								<Avatar.Image source={avatar} />
+								<Avatar.Fallback
+									backgroundColor={AppColors.primary}
+								/>
+							</Avatar>
+						</YStack>
+						<YStack alignItems="center" gap="$1">
+							<Text
+								fontSize={22}
+								fontWeight="800"
+								color={AppColors.text}
+							>
+								{user.username}
+							</Text>
+							<XStack
+								paddingHorizontal="$3"
+								paddingVertical="$1.5"
+								borderRadius="$8"
+								backgroundColor={AppColors.primaryLight + '20'}
+							>
+								<Text
+									fontSize={13}
+									fontWeight="700"
+									color={AppColors.primary}
+									textTransform="uppercase"
+								>
+									{user.role.join(', ')}
+								</Text>
+							</XStack>
+						</YStack>
+					</YStack>
+				</Card>
+
+				{/* Info Card */}
+				<Card
+					bordered
+					padding="$4"
+					backgroundColor={AppColors.surface}
+					borderColor={AppColors.border}
+					borderRadius="$10"
+					shadowColor={AppColors.shadowLight}
+					shadowRadius={4}
+					shadowOffset={{ width: 0, height: 2 }}
+					elevation={2}
+				>
+					<YStack gap="$3">
+						{/* Email */}
+						<XStack gap="$3" alignItems="center">
+							<YStack
+								width={40}
+								height={40}
+								borderRadius="$8"
+								backgroundColor={AppColors.info + '20'}
+								alignItems="center"
+								justifyContent="center"
+							>
+								<Mail size={20} color={AppColors.info} />
+							</YStack>
+							<YStack flex={1}>
+								<Text fontSize={12} color={AppColors.textMuted}>
+									Email
+								</Text>
+								<Text
+									fontSize={14}
+									fontWeight="600"
+									color={AppColors.text}
+								>
+									{user.email}
+								</Text>
+							</YStack>
+						</XStack>
+
+						<Separator borderColor={AppColors.border} />
+
+						{/* Username */}
+						<XStack gap="$3" alignItems="center">
+							<YStack
+								width={40}
+								height={40}
+								borderRadius="$8"
+								backgroundColor={AppColors.primary + '20'}
+								alignItems="center"
+								justifyContent="center"
+							>
+								<User size={20} color={AppColors.primary} />
+							</YStack>
+							<YStack flex={1}>
+								<Text fontSize={12} color={AppColors.textMuted}>
+									Tên đăng nhập
+								</Text>
+								<Text
+									fontSize={14}
+									fontWeight="600"
+									color={AppColors.text}
+								>
+									{user.username}
+								</Text>
+							</YStack>
+						</XStack>
+
+						<Separator borderColor={AppColors.border} />
+
+						{/* User ID */}
+						<XStack gap="$3" alignItems="center">
+							<YStack
+								width={40}
+								height={40}
+								borderRadius="$8"
+								backgroundColor={AppColors.accent3 + '20'}
+								alignItems="center"
+								justifyContent="center"
+							>
+								<IdCard size={20} color={AppColors.accent3} />
+							</YStack>
+							<YStack flex={1}>
+								<Text fontSize={12} color={AppColors.textMuted}>
+									ID Người dùng
+								</Text>
+								<Text
+									fontSize={14}
+									fontWeight="600"
+									color={AppColors.text}
+								>
+									{user.id}
+								</Text>
+							</YStack>
+						</XStack>
+
+						<Separator borderColor={AppColors.border} />
+
+						{/* Role */}
+						<XStack gap="$3" alignItems="center">
+							<YStack
+								width={40}
+								height={40}
+								borderRadius="$8"
+								backgroundColor={AppColors.success + '20'}
+								alignItems="center"
+								justifyContent="center"
+							>
+								<Shield size={20} color={AppColors.success} />
+							</YStack>
+							<YStack flex={1}>
+								<Text fontSize={12} color={AppColors.textMuted}>
+									Vai trò
+								</Text>
+								<Text
+									fontSize={14}
+									fontWeight="600"
+									color={AppColors.text}
+								>
+									{user.role.join(', ')}
+								</Text>
+							</YStack>
+						</XStack>
+					</YStack>
+				</Card>
+
+				{/* Logout Button */}
+				<Button
+					size="$4"
+					backgroundColor={AppColors.danger}
+					color="white"
+					icon={LogOut}
+					fontWeight="700"
+					borderRadius="$10"
+					marginTop="$2"
+					pressStyle={{
+						backgroundColor: AppColors.dangerDark,
+						scale: 0.97,
+					}}
+					onPress={handleLogout}
+					height={60}
+				>
+					Đăng xuất
+				</Button>
 			</YStack>
-
-			{/* YGroup giúp tạo danh sách với style thống nhất (như List Item) */}
-			<YGroup
-				alignSelf="center"
-				width="100%"
-				size="$4"
-				separator={<Separator />}
-			>
-				{/* 1. Tên đăng nhập */}
-				<ListItem
-					icon={User}
-					title="Tên Đăng Nhập"
-					subTitle={user.username}
-				></ListItem>
-
-				{/* 2. Email */}
-				<ListItem
-					icon={Mail}
-					title="Email"
-					subTitle={user.email}
-				></ListItem>
-
-				{/* 3. Vai trò */}
-				<ListItem
-					icon={Shield}
-					title="Vai Trò"
-					subTitle={user.role.join(', ')}
-				></ListItem>
-
-				{/* 4. ID Người dùng (Có thể ẩn nếu không cần thiết) */}
-				<ListItem
-					icon={IdCard}
-					title="ID"
-					subTitle={user.id}
-				></ListItem>
-			</YGroup>
-
-			{/* Nút Đăng xuất */}
-			<Button
-				marginTop="$6"
-				size="$5"
-				minHeight={50}
-				theme="red" // Sử dụng theme màu đỏ cho hành động nguy hiểm
-				icon={LogOut}
-				onPress={handleLogout}
-			>
-				ĐĂNG XUẤT
-			</Button>
-		</YStack>
+		</ScrollView>
 	);
 };
 

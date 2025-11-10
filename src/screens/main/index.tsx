@@ -1,6 +1,6 @@
+import LoadingIndicator from '@/src/components/LoadingIndicator';
 import { NavigationRoutes } from '@/src/navigation/types';
-import LoadingScreen from '@screens/components/LoadingScreen';
-import { useNavigation } from 'expo-router';
+import { useNavigation } from '@react-navigation/native';
 import React, { Suspense } from 'react';
 import { Button, H1, Text, YStack } from 'tamagui';
 
@@ -8,7 +8,7 @@ const MainScreen = () => {
 	const navigation = useNavigation();
 
 	return (
-		<Suspense fallback={<LoadingScreen />}>
+		<Suspense fallback={<LoadingIndicator data={''} />}>
 			<YStack
 				flex={1}
 				justifyContent="center"
