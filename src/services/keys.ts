@@ -20,6 +20,18 @@ export enum API_KEYS {
 	DEVICE_BY_SERIAL_NUMBER = 'device_by_serial_number',
 	DEVICE_BY_CATEGORY = 'device_by_category',
 	DEVICE_BY_SEARCH = 'device_by_search',
+
+	// Device Assignments
+	DEVICE_ASSIGNMENTS = 'device_assignments',
+	ALL_ASSIGNMENTS = 'all_assignments',
+
+	// Device Software
+	DEVICE_SOFTWARE = 'device_software',
+	DEVICE_SOFTWARE_LINK = 'device_software_link',
+	ALL_DEVICE_SOFTWARE_LINKS = 'all_device_software_links',
+
+	// QR Code
+	DEVICE_QR_CODE = 'device_qr_code',
 }
 
 // Get API URL from expo config with fallback and validation

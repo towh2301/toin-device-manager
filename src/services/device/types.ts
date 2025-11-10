@@ -33,6 +33,47 @@ interface DeviceFilter {
 	purchasedDateTo?: string; // ISO 8601 format
 }
 
+// Device Assignment Types
+interface DeviceAssignmentPayload {
+	deviceId: string;
+	userId?: string;
+	assignedTo?: string;
+	assignmentDate: string; // ISO 8601 format
+	returnDate?: string; // ISO 8601 format
+	notes?: string;
+}
+
+interface DeviceAssignmentResponse {
+	id: string;
+	deviceId: string;
+	userId?: string;
+	assignedTo?: string;
+	assignmentDate: string;
+	returnDate?: string;
+	notes?: string;
+	createdAt: string;
+	updatedAt: string;
+}
+
+// Device Software Types
+interface DeviceSoftwareResponse {
+	id: string;
+	deviceId: string;
+	softwareId: string;
+	installedDate: string;
+	licenseKey?: string;
+	version?: string;
+	createdAt: string;
+	updatedAt: string;
+}
+
+// QR Code Response
+interface QrCodeResponse {
+	qrCode: string; // Base64 encoded QR code image
+	deviceId: string;
+	serialNumber: string;
+}
+
 enum DeviceStatus {
 	AVAILABLE = 'AVAILABLE',
 	IN_USE = 'IN_USE',
@@ -80,10 +121,14 @@ enum DeviceType {
 
 export {
 	Brand,
+	DeviceAssignmentPayload,
+	DeviceAssignmentResponse,
 	DeviceCreatePayload,
 	DeviceFilter,
 	DeviceResponse,
+	DeviceSoftwareResponse,
 	DeviceStatus,
 	DeviceType,
 	DeviceUpdatePayload,
+	QrCodeResponse,
 };

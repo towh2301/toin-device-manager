@@ -1,10 +1,10 @@
 // src/screens/main/device/ScanQRDevice.tsx
 import { AppColors } from '@/src/common/app-color';
 import { NavigationRoutes } from '@/src/navigation/types';
+import { useGetAllDevices } from '@/src/services/device';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { DeviceResponse } from '@services/device/types';
-import { useGetAllDevices } from '@services/device/useGetAllDevices';
 import {
 	ArrowLeft,
 	CheckCircle2,

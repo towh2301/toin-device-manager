@@ -1,11 +1,11 @@
 import { AppColors } from '@/src/common/app-color';
 import { StatusBadge } from '@/src/components/StatusBadge';
 import { NavigationRoutes } from '@/src/navigation/types';
+import { useGetAllDevices } from '@/src/services/device';
 import { useAuthStore } from '@/src/store';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { DeviceResponse, DeviceStatus } from '@services/device/types';
-import { useGetAllDevices } from '@services/device/useGetAllDevices';
 import React, { useMemo } from 'react';
 import { FlatList } from 'react-native';
 import { Button, Card, Separator, Text, XStack, YStack } from 'tamagui';
@@ -89,25 +89,45 @@ const HomeScreen = () => {
 
 	// Nhận 1 device duy nhất - Thiết kế mới đẹp hơn
 	const renderDeviceItem = ({ item }: { item: DeviceResponse }) => {
+		// Get device type icon
+		const getDeviceIcon = (
+			type: string
+		): keyof typeof Ionicons.glyphMap => {
+			const iconMap: Record<string, keyof typeof Ionicons.glyphMap> = {
+				SMARTPHONE: 'phone-portrait',
+				TABLET: 'tablet-portrait',
+				LAPTOP: 'laptop',
+				DESKTOP: 'desktop',
+				MONITOR: 'tv',
+				PRINTER: 'print',
+				CAMERA: 'camera',
+				ROUTER: 'wifi',
+				SWITCH: 'git-network',
+				OTHER: 'cube',
+			};
+			return iconMap[type] || 'cube-outline';
+		};
+
 		return (
 			<Card
 				key={item.id}
-				padding="$4"
+				padding="$0"
 				bordered
 				backgroundColor={AppColors.surface}
 				borderColor={AppColors.border}
 				borderWidth={1}
 				shadowColor={AppColors.shadowLight}
-				shadowRadius={6}
-				shadowOffset={{ width: 0, height: 2 }}
-				elevation={3}
+				shadowRadius={8}
+				shadowOffset={{ width: 0, height: 3 }}
+				elevation={4}
 				pressStyle={{
-					scale: 0.97,
+					scale: 0.98,
 					borderColor: AppColors.primary,
-					shadowRadius: 8,
+					shadowRadius: 12,
 				}}
 				animation="quick"
-				borderRadius="$4"
+				borderRadius="$5"
+				overflow="hidden"
 				onPress={() =>
 					navigation.navigate(NavigationRoutes.DEVICE, {
 						screen: NavigationRoutes.DEVICE_DETAIL,
@@ -115,94 +135,154 @@ const HomeScreen = () => {
 					})
 				}
 			>
-				<XStack gap="$3" alignItems="flex-start">
-					{/* Device Icon */}
-					<YStack
-						width={52}
-						height={52}
-						backgroundColor={AppColors.primaryLight + '30'}
-						borderRadius="$3"
-						justifyContent="center"
-						alignItems="center"
-						borderWidth={1}
-						borderColor={AppColors.primary + '20'}
-					>
-						<Ionicons
-							name="phone-portrait-outline"
-							size={26}
-							color={AppColors.primary}
-						/>
-					</YStack>
-
-					{/* Device Info */}
-					<YStack flex={1} gap="$2">
-						<XStack
-							justifyContent="space-between"
-							alignItems="flex-start"
+				{/* Header with gradient-like effect */}
+				<XStack
+					backgroundColor={AppColors.primary + '08'}
+					padding="$3"
+					borderBottomWidth={1}
+					borderBottomColor={AppColors.border}
+				>
+					<XStack gap="$3" alignItems="center" flex={1}>
+						{/* Device Icon with gradient background */}
+						<YStack
+							width={48}
+							height={48}
+							backgroundColor={AppColors.primary}
+							borderRadius="$4"
+							justifyContent="center"
+							alignItems="center"
+							shadowColor={AppColors.primary}
+							shadowRadius={8}
+							shadowOffset={{ width: 0, height: 2 }}
+							elevation={3}
 						>
+							<Ionicons
+								name={getDeviceIcon(item.type)}
+								size={24}
+								color="white"
+							/>
+						</YStack>
+
+						{/* Device Name & Status */}
+						<YStack flex={1} gap="$1">
 							<Text
 								fontSize={16}
-								fontWeight="700"
+								fontWeight="800"
 								color={AppColors.text}
 								numberOfLines={1}
-								flex={1}
 							>
 								{item.name}
 							</Text>
 							<StatusBadge status={item.status} />
-						</XStack>
+						</YStack>
+					</XStack>
+				</XStack>
 
-						<XStack gap="$2" alignItems="center">
-							<Ionicons
-								name="pricetag-outline"
-								size={14}
-								color={AppColors.primary}
-							/>
+				{/* Body */}
+				<YStack padding="$3" gap="$2.5">
+					{/* Serial Number */}
+					<XStack
+						gap="$2"
+						alignItems="center"
+						backgroundColor={AppColors.primaryLight + '15'}
+						padding="$2"
+						borderRadius="$3"
+					>
+						<Ionicons
+							name="pricetag"
+							size={16}
+							color={AppColors.primary}
+						/>
+						<Text
+							fontSize={13}
+							color={AppColors.primary}
+							fontWeight="700"
+							flex={1}
+						>
+							{item.serialNumber}
+						</Text>
+					</XStack>
+
+					{/* Brand & Type */}
+					<XStack gap="$2" alignItems="center">
+						<YStack
+							flex={1}
+							backgroundColor={AppColors.background}
+							padding="$2"
+							borderRadius="$2"
+						>
+							<Text fontSize={10} color={AppColors.textMuted}>
+								Thương hiệu
+							</Text>
 							<Text
 								fontSize={13}
-								color={AppColors.primary}
 								fontWeight="600"
+								color={AppColors.text}
 							>
-								{item.serialNumber}
-							</Text>
-						</XStack>
-
-						<XStack gap="$2" alignItems="center" flexWrap="wrap">
-							<Text fontSize={12} color={AppColors.textSecondary}>
 								{item.brand}
 							</Text>
-							<Text fontSize={12} color={AppColors.textMuted}>
-								•
+						</YStack>
+						<YStack
+							flex={1}
+							backgroundColor={AppColors.background}
+							padding="$2"
+							borderRadius="$2"
+						>
+							<Text fontSize={10} color={AppColors.textMuted}>
+								Loại
 							</Text>
-							<Text fontSize={12} color={AppColors.textSecondary}>
+							<Text
+								fontSize={13}
+								fontWeight="600"
+								color={AppColors.text}
+							>
 								{item.type}
 							</Text>
-						</XStack>
+						</YStack>
+					</XStack>
 
-						<XStack gap="$2" alignItems="center">
-							<Ionicons
-								name="calendar-outline"
-								size={12}
-								color={AppColors.textMuted}
-							/>
-							<Text fontSize={11} color={AppColors.textMuted}>
+					{/* Purchase Date */}
+					<XStack gap="$2" alignItems="center">
+						<Ionicons
+							name="calendar"
+							size={14}
+							color={AppColors.textSecondary}
+						/>
+						<Text fontSize={12} color={AppColors.textSecondary}>
+							Mua ngày:{' '}
+							<Text fontWeight="600">
 								{item.purchasedDate
 									? new Date(
 											item.purchasedDate
-										).toLocaleDateString('vi-VN', {
-											day: '2-digit',
-											month: '2-digit',
-											year: 'numeric',
-										})
+										).toLocaleDateString('vi-VN')
 									: 'N/A'}
 							</Text>
-						</XStack>
-					</YStack>
+						</Text>
+					</XStack>
+				</YStack>
+
+				{/* Footer with action hint */}
+				<XStack
+					backgroundColor={AppColors.background}
+					padding="$2"
+					justifyContent="center"
+					alignItems="center"
+					borderTopWidth={1}
+					borderTopColor={AppColors.border}
+					gap="$1"
+				>
+					<Text fontSize={11} color={AppColors.textMuted}>
+						Nhấn để xem chi tiết
+					</Text>
+					<Ionicons
+						name="chevron-forward"
+						size={12}
+						color={AppColors.textMuted}
+					/>
 				</XStack>
 			</Card>
 		);
 	};
-
 	return (
 		<YStack
 			flex={1}
@@ -511,7 +591,7 @@ const HomeScreen = () => {
 										}
 										height={30}
 									>
-										Quản lý thiết bị
+										<Text>Quản lý thiết bị</Text>
 									</Button>
 									<Button
 										flex={1}
@@ -541,7 +621,7 @@ const HomeScreen = () => {
 										}
 										height="auto"
 									>
-										Quét QR
+										<Text>Quét mã QR</Text>
 									</Button>
 								</XStack>
 							</YStack>
