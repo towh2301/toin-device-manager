@@ -1,21 +1,31 @@
 import { AppColors } from '@/src/common/app-color';
+import AssignDeviceModal from '@/src/components/AssignDeviceModal';
 import LoadingIndicator from '@/src/components/LoadingIndicator';
 import { StatusBadge } from '@/src/components/StatusBadge';
 import { TypeBadge } from '@/src/components/TypeBadge';
 import { DeviceStackParamList, NavigationRoutes } from '@/src/navigation/types';
-import { useGetDeviceBySerialNumber } from '@/src/services/device';
+import {
+	useGetDeviceAssignments,
+	useGetDeviceBySerialNumber,
+	useGetDeviceSoftware,
+	useUnassignDevice,
+} from '@/src/services/device';
 import { DeviceType } from '@/src/services/device/types';
+import { Ionicons } from '@expo/vector-icons';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import {
 	ArrowLeft,
 	Calendar,
 	Copy,
+	Key,
+	Monitor,
 	Package,
 	Share2,
 	Tag,
+	User,
 } from '@tamagui/lucide-icons';
 import * as Clipboard from 'expo-clipboard';
-import React from 'react';
+import React, { useState } from 'react';
 import { Alert, ScrollView, Share } from 'react-native';
 import { Button, Card, Separator, Text, XStack, YStack } from 'tamagui';
 
@@ -28,9 +38,30 @@ export default function DeviceDetailScreen() {
 	const route = useRoute<DeviceDetailRouteProp>();
 	const navigation = useNavigation();
 	const serialNumber = route.params?.serialNumber || '';
+	const [showAssignModal, setShowAssignModal] = useState(false);
 
 	const { deviceData, isLoading, isError, error } =
 		useGetDeviceBySerialNumber(serialNumber);
+
+	// Get device assignments and software
+	const { data: assignmentsResponse } = useGetDeviceAssignments(
+		deviceData?.id || ''
+	);
+	const { data: softwareResponse } = useGetDeviceSoftware(
+		deviceData?.id || ''
+	);
+
+	// Extract data from API responses
+	const assignments = assignmentsResponse?.data || [];
+	const softwareList = softwareResponse?.data || [];
+
+	// Find current assignment (returnDate is null/undefined)
+	const currentAssignment = assignments.find(
+		(assignment) => !assignment.returnDate
+	);
+
+	// Mutations
+	const unassignMutation = useUnassignDevice();
 
 	if (isLoading) {
 		return <LoadingIndicator data={''} />;
@@ -103,280 +134,636 @@ export default function DeviceDetailScreen() {
 		} catch {}
 	};
 
-	return (
-		<ScrollView
-			style={{
-				flex: 1,
-				backgroundColor: AppColors.background,
-			}}
-			contentContainerStyle={{
-				paddingHorizontal: 16,
-				paddingTop: 60,
-				paddingBottom: 140,
-			}}
-		>
-			<YStack gap="$4">
-				{/* Header with Back Button */}
-				<XStack alignItems="center" gap="$3" marginBottom="$2">
-					<Button
-						size="$8"
-						circular
-						chromeless
-						icon={ArrowLeft}
-						backgroundColor={AppColors.surface}
-						borderWidth={1}
-						borderColor={AppColors.border}
-						color={AppColors.text}
-						pressStyle={{
-							backgroundColor: AppColors.surfaceElevated,
-							scale: 0.95,
-						}}
-						onPress={() => navigation.goBack()}
-					/>
-					<YStack flex={1}>
-						<Text fontSize={13} color={AppColors.textMuted}>
-							Chi tiết thiết bị
-						</Text>
-						<Text
-							fontSize={24}
-							fontWeight="800"
-							color={AppColors.text}
-						>
-							{deviceData.name}
-						</Text>
-					</YStack>
-				</XStack>
+	const handleUnassign = async () => {
+		if (!currentAssignment) return;
 
-				{/* Device Icon Card */}
-				<Card
-					backgroundColor={AppColors.primary}
-					padding="$6"
-					borderRadius="$10"
-					bordered={false}
-					shadowColor={AppColors.shadowMedium}
-					shadowRadius={12}
-					shadowOffset={{ width: 0, height: 4 }}
-					elevation={4}
-				>
-					<YStack alignItems="center" gap="$3">
-						<YStack
-							width={80}
-							height={80}
-							borderRadius="$10"
-							backgroundColor="white"
-							alignItems="center"
-							justifyContent="center"
-						>
-							<Text fontSize={40}>
-								{deviceData.type === DeviceType.LAPTOP
-									? '💻'
-									: deviceData.type === DeviceType.DESKTOP
-										? '🖥️'
-										: deviceData.type ===
-											  DeviceType.SMARTPHONE
-											? '📱'
-											: deviceData.type ===
-												  DeviceType.TABLET
-												? '📱'
-												: deviceData.type ===
-													  DeviceType.PRINTER
-													? '🖨️'
-													: deviceData.type ===
-														  DeviceType.CAMERA
-														? '📷'
-														: deviceData.type ===
-															  DeviceType.ROUTER
-															? '📡'
-															: deviceData.type ===
-																  DeviceType.SWITCH
-																? '🔀'
-																: deviceData.type ===
-																	  'monitor'
-																	? '🖥️'
-																	: '📦'}
+		Alert.alert(
+			'Xác nhận thu hồi',
+			`Bạn có chắc muốn thu hồi thiết bị này từ ${currentAssignment.assignedTo}?`,
+			[
+				{ text: 'Hủy', style: 'cancel' },
+				{
+					text: 'Thu hồi',
+					style: 'destructive',
+					onPress: async () => {
+						try {
+							await unassignMutation.mutateAsync(
+								currentAssignment.id
+							);
+							Alert.alert('✓ Thành công', 'Đã thu hồi thiết bị');
+						} catch (error: any) {
+							Alert.alert(
+								'Lỗi',
+								error?.message || 'Không thể thu hồi thiết bị'
+							);
+						}
+					},
+				},
+			]
+		);
+	};
+
+	return (
+		<>
+			<ScrollView
+				style={{
+					flex: 1,
+					backgroundColor: AppColors.background,
+				}}
+				contentContainerStyle={{
+					paddingHorizontal: 16,
+					paddingTop: 60,
+					paddingBottom: 140,
+				}}
+			>
+				<YStack gap="$4">
+					{/* Header with Back Button */}
+					<XStack alignItems="center" gap="$3" marginBottom="$2">
+						<Button
+							size="$8"
+							circular
+							chromeless
+							icon={ArrowLeft}
+							backgroundColor={AppColors.surface}
+							borderWidth={1}
+							borderColor={AppColors.border}
+							color={AppColors.text}
+							pressStyle={{
+								backgroundColor: AppColors.surfaceElevated,
+								scale: 0.95,
+							}}
+							onPress={() => navigation.goBack()}
+						/>
+						<YStack flex={1}>
+							<Text fontSize={13} color={AppColors.textMuted}>
+								Chi tiết thiết bị
+							</Text>
+							<Text
+								fontSize={24}
+								fontWeight="800"
+								color={AppColors.text}
+							>
+								{deviceData.name}
 							</Text>
 						</YStack>
-						<XStack gap="$2" alignItems="center">
-							<StatusBadge status={deviceData.status} />
-							<TypeBadge
-								type={deviceData.type}
-								backgroundColor={AppColors.infoLight}
-							/>
-						</XStack>
-					</YStack>
-				</Card>
+					</XStack>
 
-				{/* Info Card */}
-				<Card
-					bordered
-					padding="$4"
-					backgroundColor={AppColors.surface}
-					borderColor={AppColors.border}
-					borderRadius="$10"
-					shadowColor={AppColors.shadowLight}
-					shadowRadius={4}
-					shadowOffset={{ width: 0, height: 2 }}
-					elevation={2}
-				>
-					<YStack gap="$3">
-						{/* ID */}
-						<XStack gap="$3" alignItems="center">
-							<YStack
-								width={40}
-								height={40}
-								borderRadius="$8"
-								backgroundColor={AppColors.primaryLight + '20'}
-								alignItems="center"
-								justifyContent="center"
-							>
-								<Tag size={20} color={AppColors.primary} />
-							</YStack>
-							<YStack flex={1}>
-								<Text fontSize={12} color={AppColors.textMuted}>
-									ID Thiết bị
-								</Text>
-								<Text
-									fontSize={14}
-									fontWeight="600"
-									color={AppColors.text}
-								>
-									{deviceData.id}
-								</Text>
-							</YStack>
-						</XStack>
-
-						<Separator borderColor={AppColors.border} />
-
-						{/* Serial Number */}
-						<XStack gap="$3" alignItems="center">
-							<YStack
-								width={40}
-								height={40}
-								borderRadius="$8"
-								backgroundColor={AppColors.info + '20'}
-								alignItems="center"
-								justifyContent="center"
-							>
-								<Package size={20} color={AppColors.info} />
-							</YStack>
-							<YStack flex={1}>
-								<Text fontSize={12} color={AppColors.textMuted}>
-									Serial Number
-								</Text>
-								<Text
-									fontSize={14}
-									fontWeight="600"
-									color={AppColors.text}
-								>
-									{deviceData.serialNumber}
-								</Text>
-							</YStack>
-						</XStack>
-
-						<Separator borderColor={AppColors.border} />
-
-						{/* Brand */}
-						<XStack gap="$3" alignItems="center">
-							<YStack
-								width={40}
-								height={40}
-								borderRadius="$8"
-								backgroundColor={AppColors.accent3 + '20'}
-								alignItems="center"
-								justifyContent="center"
-							>
-								<Text fontSize={20}>🏢</Text>
-							</YStack>
-							<YStack flex={1}>
-								<Text fontSize={12} color={AppColors.textMuted}>
-									Thương hiệu
-								</Text>
-								<Text
-									fontSize={14}
-									fontWeight="600"
-									color={AppColors.text}
-								>
-									{deviceData.brand}
-								</Text>
-							</YStack>
-						</XStack>
-
-						<Separator borderColor={AppColors.border} />
-
-						{/* Purchase Date */}
-						<XStack gap="$3" alignItems="center">
-							<YStack
-								width={40}
-								height={40}
-								borderRadius="$8"
-								backgroundColor={AppColors.warning + '20'}
-								alignItems="center"
-								justifyContent="center"
-							>
-								<Calendar size={20} color={AppColors.warning} />
-							</YStack>
-							<YStack flex={1}>
-								<Text fontSize={12} color={AppColors.textMuted}>
-									Ngày mua
-								</Text>
-								<Text
-									fontSize={14}
-									fontWeight="600"
-									color={AppColors.text}
-								>
-									{new Date(
-										deviceData.purchasedDate
-									).toLocaleDateString('vi-VN', {
-										day: '2-digit',
-										month: '2-digit',
-										year: 'numeric',
-									})}
-								</Text>
-							</YStack>
-						</XStack>
-					</YStack>
-				</Card>
-
-				{/* Action Buttons */}
-				<XStack gap="$3" flexWrap="wrap">
-					<Button
-						flex={1}
-						minWidth={150}
-						size="$4"
-						backgroundColor={AppColors.info}
-						color="white"
-						icon={Copy}
-						fontWeight="700"
+					{/* Device Icon Card */}
+					<Card
+						backgroundColor={AppColors.primary}
+						padding="$6"
 						borderRadius="$10"
-						pressStyle={{
-							backgroundColor: AppColors.infoDark,
-							scale: 0.97,
-						}}
-						onPress={copySN}
-						height={'40'}
+						bordered={false}
+						shadowColor={AppColors.shadowMedium}
+						shadowRadius={12}
+						shadowOffset={{ width: 0, height: 4 }}
+						elevation={4}
 					>
-						Sao chép SN
-					</Button>
-					<Button
-						flex={1}
-						minWidth={150}
-						size="$4"
-						backgroundColor={AppColors.success}
-						color="white"
-						icon={Share2}
-						fontWeight="700"
+						<YStack alignItems="center" gap="$3">
+							<YStack
+								width={80}
+								height={80}
+								borderRadius="$10"
+								backgroundColor="white"
+								alignItems="center"
+								justifyContent="center"
+							>
+								<Text fontSize={40}>
+									{deviceData.type === DeviceType.LAPTOP
+										? '💻'
+										: deviceData.type === DeviceType.DESKTOP
+											? '🖥️'
+											: deviceData.type ===
+												  DeviceType.SMARTPHONE
+												? '📱'
+												: deviceData.type ===
+													  DeviceType.TABLET
+													? '📱'
+													: deviceData.type ===
+														  DeviceType.PRINTER
+														? '🖨️'
+														: deviceData.type ===
+															  DeviceType.CAMERA
+															? '📷'
+															: deviceData.type ===
+																  DeviceType.ROUTER
+																? '📡'
+																: deviceData.type ===
+																	  DeviceType.SWITCH
+																	? '🔀'
+																	: deviceData.type ===
+																		  'monitor'
+																		? '🖥️'
+																		: '📦'}
+								</Text>
+							</YStack>
+							<XStack gap="$2" alignItems="center">
+								<StatusBadge status={deviceData.status} />
+								<TypeBadge
+									type={deviceData.type}
+									backgroundColor={AppColors.infoLight}
+								/>
+							</XStack>
+						</YStack>
+					</Card>
+
+					{/* Info Card */}
+					<Card
+						bordered
+						padding="$4"
+						backgroundColor={AppColors.surface}
+						borderColor={AppColors.border}
 						borderRadius="$10"
-						pressStyle={{
-							backgroundColor: AppColors.successDark,
-							scale: 0.97,
-						}}
-						onPress={shareInfo}
-						height={'40'}
+						shadowColor={AppColors.shadowLight}
+						shadowRadius={4}
+						shadowOffset={{ width: 0, height: 2 }}
+						elevation={2}
 					>
-						Chia sẻ
-					</Button>
-				</XStack>
-			</YStack>
-		</ScrollView>
+						<YStack gap="$3">
+							{/* ID */}
+							<XStack gap="$3" alignItems="center">
+								<YStack
+									width={40}
+									height={40}
+									borderRadius="$8"
+									backgroundColor={
+										AppColors.primaryLight + '20'
+									}
+									alignItems="center"
+									justifyContent="center"
+								>
+									<Tag size={20} color={AppColors.primary} />
+								</YStack>
+								<YStack flex={1}>
+									<Text
+										fontSize={12}
+										color={AppColors.textMuted}
+									>
+										ID Thiết bị
+									</Text>
+									<Text
+										fontSize={14}
+										fontWeight="600"
+										color={AppColors.text}
+									>
+										{deviceData.id}
+									</Text>
+								</YStack>
+							</XStack>
+
+							<Separator borderColor={AppColors.border} />
+
+							{/* Serial Number */}
+							<XStack gap="$3" alignItems="center">
+								<YStack
+									width={40}
+									height={40}
+									borderRadius="$8"
+									backgroundColor={AppColors.info + '20'}
+									alignItems="center"
+									justifyContent="center"
+								>
+									<Package size={20} color={AppColors.info} />
+								</YStack>
+								<YStack flex={1}>
+									<Text
+										fontSize={12}
+										color={AppColors.textMuted}
+									>
+										Serial Number
+									</Text>
+									<Text
+										fontSize={14}
+										fontWeight="600"
+										color={AppColors.text}
+									>
+										{deviceData.serialNumber}
+									</Text>
+								</YStack>
+							</XStack>
+
+							<Separator borderColor={AppColors.border} />
+
+							{/* Brand */}
+							<XStack gap="$3" alignItems="center">
+								<YStack
+									width={40}
+									height={40}
+									borderRadius="$8"
+									backgroundColor={AppColors.accent3 + '20'}
+									alignItems="center"
+									justifyContent="center"
+								>
+									<Text fontSize={20}>🏢</Text>
+								</YStack>
+								<YStack flex={1}>
+									<Text
+										fontSize={12}
+										color={AppColors.textMuted}
+									>
+										Thương hiệu
+									</Text>
+									<Text
+										fontSize={14}
+										fontWeight="600"
+										color={AppColors.text}
+									>
+										{deviceData.brand}
+									</Text>
+								</YStack>
+							</XStack>
+
+							<Separator borderColor={AppColors.border} />
+
+							{/* Purchase Date */}
+							<XStack gap="$3" alignItems="center">
+								<YStack
+									width={40}
+									height={40}
+									borderRadius="$8"
+									backgroundColor={AppColors.warning + '20'}
+									alignItems="center"
+									justifyContent="center"
+								>
+									<Calendar
+										size={20}
+										color={AppColors.warning}
+									/>
+								</YStack>
+								<YStack flex={1}>
+									<Text
+										fontSize={12}
+										color={AppColors.textMuted}
+									>
+										Ngày mua
+									</Text>
+									<Text
+										fontSize={14}
+										fontWeight="600"
+										color={AppColors.text}
+									>
+										{new Date(
+											deviceData.purchasedDate
+										).toLocaleDateString('vi-VN', {
+											day: '2-digit',
+											month: '2-digit',
+											year: 'numeric',
+										})}
+									</Text>
+								</YStack>
+							</XStack>
+						</YStack>
+					</Card>
+
+					{/* Assigned User Section */}
+					<Card
+						bordered
+						padding="$4"
+						backgroundColor={AppColors.surface}
+						borderColor={AppColors.border}
+						borderRadius="$10"
+						shadowColor={AppColors.shadowLight}
+						shadowRadius={4}
+						shadowOffset={{ width: 0, height: 2 }}
+						elevation={2}
+					>
+						<YStack gap="$3">
+							{/* Header with Action Button */}
+							<XStack
+								alignItems="center"
+								justifyContent="space-between"
+							>
+								<XStack alignItems="center" gap="$2">
+									<User size={20} color={AppColors.primary} />
+									<Text
+										fontSize={16}
+										fontWeight="700"
+										color={AppColors.text}
+									>
+										Người dùng
+									</Text>
+								</XStack>
+								{currentAssignment ? (
+									<Button
+										size="$2"
+										backgroundColor={AppColors.danger}
+										color="white"
+										onPress={handleUnassign}
+										disabled={unassignMutation.isPending}
+									>
+										{unassignMutation.isPending
+											? 'Đang xử lý...'
+											: 'Thu hồi'}
+									</Button>
+								) : (
+									<Button
+										size="$2"
+										backgroundColor={AppColors.primary}
+										color="white"
+										onPress={() => setShowAssignModal(true)}
+									>
+										Giao thiết bị
+									</Button>
+								)}
+							</XStack>
+
+							<Separator borderColor={AppColors.border} />
+
+							{currentAssignment ? (
+								<XStack gap="$3" alignItems="center">
+									<YStack
+										width={50}
+										height={50}
+										borderRadius="$10"
+										backgroundColor={
+											AppColors.primary + '20'
+										}
+										alignItems="center"
+										justifyContent="center"
+										borderWidth={2}
+										borderColor={AppColors.primary + '30'}
+									>
+										<Text
+											fontSize={20}
+											fontWeight="700"
+											color={AppColors.primary}
+										>
+											{currentAssignment.assignedTo?.charAt(
+												0
+											) || 'U'}
+										</Text>
+									</YStack>
+									<YStack flex={1}>
+										<Text
+											fontSize={14}
+											fontWeight="600"
+											color={AppColors.text}
+										>
+											{currentAssignment.assignedTo ||
+												'Không rõ'}
+										</Text>
+										<Text
+											fontSize={12}
+											color={AppColors.textMuted}
+										>
+											Ngày giao:{' '}
+											{new Date(
+												currentAssignment.assignmentDate
+											).toLocaleDateString('vi-VN')}
+										</Text>
+										{currentAssignment.notes && (
+											<Text
+												fontSize={11}
+												color={AppColors.textSecondary}
+												marginTop="$1"
+											>
+												📝 {currentAssignment.notes}
+											</Text>
+										)}
+									</YStack>
+								</XStack>
+							) : (
+								<YStack
+									padding="$3"
+									alignItems="center"
+									gap="$2"
+								>
+									<Ionicons
+										name="person-outline"
+										size={32}
+										color={AppColors.textMuted}
+									/>
+									<Text
+										fontSize={13}
+										color={AppColors.textSecondary}
+									>
+										Chưa có người dùng
+									</Text>
+								</YStack>
+							)}
+						</YStack>
+					</Card>
+
+					{/* Software Section */}
+					<Card
+						bordered
+						padding="$4"
+						backgroundColor={AppColors.surface}
+						borderColor={AppColors.border}
+						borderRadius="$10"
+						shadowColor={AppColors.shadowLight}
+						shadowRadius={4}
+						shadowOffset={{ width: 0, height: 2 }}
+						elevation={2}
+					>
+						<YStack gap="$3">
+							{/* Header */}
+							<XStack
+								alignItems="center"
+								justifyContent="space-between"
+							>
+								<XStack alignItems="center" gap="$2">
+									<Monitor size={20} color={AppColors.info} />
+									<Text
+										fontSize={16}
+										fontWeight="700"
+										color={AppColors.text}
+									>
+										Phần mềm
+									</Text>
+								</XStack>
+								<Text
+									fontSize={12}
+									color={AppColors.textMuted}
+									backgroundColor={AppColors.info + '20'}
+									paddingHorizontal="$2"
+									paddingVertical="$1"
+									borderRadius="$2"
+								>
+									{softwareList.length} phần mềm
+								</Text>
+							</XStack>
+
+							<Separator borderColor={AppColors.border} />
+
+							{softwareList.length > 0 ? (
+								<YStack gap="$2">
+									{softwareList.map((software, index) => (
+										<XStack
+											key={software.id}
+											gap="$2"
+											alignItems="center"
+											padding="$2"
+											backgroundColor={
+												AppColors.background
+											}
+											borderRadius="$2"
+										>
+											<YStack
+												width={32}
+												height={32}
+												borderRadius="$2"
+												backgroundColor={
+													AppColors.info + '20'
+												}
+												alignItems="center"
+												justifyContent="center"
+											>
+												<Text fontSize={14}>💿</Text>
+											</YStack>
+											<YStack flex={1}>
+												<Text
+													fontSize={13}
+													fontWeight="600"
+													color={AppColors.text}
+												>
+													Software #
+													{software.softwareId}
+												</Text>
+												<Text
+													fontSize={11}
+													color={AppColors.textMuted}
+												>
+													Cài đặt:{' '}
+													{new Date(
+														software.installedDate
+													).toLocaleDateString(
+														'vi-VN'
+													)}
+												</Text>
+											</YStack>
+											{software.version && (
+												<Text
+													fontSize={11}
+													color={
+														AppColors.textSecondary
+													}
+													backgroundColor={
+														AppColors.accent3 + '20'
+													}
+													paddingHorizontal="$2"
+													paddingVertical="$1"
+													borderRadius="$2"
+												>
+													v{software.version}
+												</Text>
+											)}
+										</XStack>
+									))}
+								</YStack>
+							) : (
+								<YStack
+									padding="$3"
+									alignItems="center"
+									gap="$2"
+								>
+									<Ionicons
+										name="laptop-outline"
+										size={32}
+										color={AppColors.textMuted}
+									/>
+									<Text
+										fontSize={13}
+										color={AppColors.textSecondary}
+									>
+										Chưa cài phần mềm
+									</Text>
+								</YStack>
+							)}
+						</YStack>
+					</Card>
+
+					{/* Credentials Section */}
+					<Card
+						bordered
+						padding="$4"
+						backgroundColor={AppColors.surface}
+						borderColor={AppColors.border}
+						borderRadius="$10"
+						shadowColor={AppColors.shadowLight}
+						shadowRadius={4}
+						shadowOffset={{ width: 0, height: 2 }}
+						elevation={2}
+					>
+						<YStack gap="$3">
+							{/* Header */}
+							<XStack alignItems="center" gap="$2">
+								<Key size={20} color={AppColors.warning} />
+								<Text
+									fontSize={16}
+									fontWeight="700"
+									color={AppColors.text}
+								>
+									Thông tin đăng nhập
+								</Text>
+							</XStack>
+
+							<Separator borderColor={AppColors.border} />
+
+							{/* Placeholder - Will be implemented later */}
+							<YStack padding="$3" alignItems="center" gap="$2">
+								<Ionicons
+									name="key-outline"
+									size={32}
+									color={AppColors.textMuted}
+								/>
+								<Text
+									fontSize={13}
+									color={AppColors.textSecondary}
+								>
+									Chưa có thông tin đăng nhập
+								</Text>
+							</YStack>
+						</YStack>
+					</Card>
+
+					{/* Action Buttons */}
+					<XStack gap="$3" flexWrap="wrap">
+						<Button
+							flex={1}
+							minWidth={150}
+							size="$4"
+							backgroundColor={AppColors.info}
+							color="white"
+							icon={Copy}
+							fontWeight="700"
+							borderRadius="$10"
+							pressStyle={{
+								backgroundColor: AppColors.infoDark,
+								scale: 0.97,
+							}}
+							onPress={copySN}
+							height={'40'}
+						>
+							Sao chép SN
+						</Button>
+						<Button
+							flex={1}
+							minWidth={150}
+							size="$4"
+							backgroundColor={AppColors.success}
+							color="white"
+							icon={Share2}
+							fontWeight="700"
+							borderRadius="$10"
+							pressStyle={{
+								backgroundColor: AppColors.successDark,
+								scale: 0.97,
+							}}
+							onPress={shareInfo}
+							height={'40'}
+						>
+							Chia sẻ
+						</Button>
+					</XStack>
+				</YStack>
+			</ScrollView>
+
+			<AssignDeviceModal
+				visible={showAssignModal}
+				onClose={() => setShowAssignModal(false)}
+				preselectedDeviceId={deviceData?.id}
+			/>
+		</>
 	);
 }

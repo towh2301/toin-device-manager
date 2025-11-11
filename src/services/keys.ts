@@ -11,7 +11,10 @@ export enum API_KEYS {
 
 	// Toin users
 	TOIN_USERS = 'toin_users',
+	ALL_TOIN_USERS = 'all_toin_users',
 	TOIN_USER_INFO = 'toin_user_info',
+	TOIN_USER_BY_ID = 'toin_user_by_id',
+	DEPARTMENT_LIST = 'department_list',
 
 	// Devices
 	ALL_DEVICES = 'devices',

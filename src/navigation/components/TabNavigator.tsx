@@ -34,19 +34,16 @@ const TabNavigator = () => {
 						const tabRoute = state.routes.find(
 							(r) => r.name === NavigationRoutes.DEVICE
 						);
-						const isFocused = navigation.isFocused();
+						const nestedState: any = tabRoute?.state;
+						const currentNestedRoute =
+							nestedState?.routes?.[nestedState.index ?? 0];
+						const nestedName = currentNestedRoute?.name;
 
-						// Nếu tab đang được focus lại thì reset stack về DeviceList
-						if (
-							isFocused &&
-							tabRoute?.state?.index !== undefined &&
-							tabRoute.state.index > 0
-						) {
-							e.preventDefault();
-							navigation.navigate(NavigationRoutes.DEVICE, {
-								screen: NavigationRoutes.DEVICE_LIST,
-							});
-						}
+						// Luôn đảm bảo khi ấn tab Devices thì về danh sách
+						e.preventDefault();
+						navigation.navigate(NavigationRoutes.DEVICE, {
+							screen: NavigationRoutes.DEVICE_LIST,
+						});
 					},
 				})}
 			/>

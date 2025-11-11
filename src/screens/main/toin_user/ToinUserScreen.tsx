@@ -1,123 +1,125 @@
 import { AppColors } from '@/src/common/app-color';
+import LoadingIndicator from '@/src/components/LoadingIndicator';
+import { NavigationRoutes } from '@/src/navigation/types';
+import {
+	Position,
+	ToinUserResponse,
+	useDeleteToinUser,
+	useGetAllToinUsers,
+} from '@/src/services/toin-user';
 import { Ionicons } from '@expo/vector-icons';
-import React, { useMemo, useState } from 'react';
-import { FlatList, TextInput, TouchableOpacity } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import React, { useCallback, useMemo, useState } from 'react';
+import { Alert, FlatList, TextInput, TouchableOpacity } from 'react-native';
+import Toast from 'react-native-toast-message';
 import { Button, Card, Separator, Text, XStack, YStack } from 'tamagui';
-
-// Mock user type
-interface ToinUser {
-	id: number;
-	fullName: string;
-	email: string;
-	username: string;
-	role: 'ADMIN' | 'MANAGER' | 'STAFF';
-	department: string;
-	isActive: boolean;
-	joinedDate: string;
-}
-
-// Mock data
-const MOCK_USERS: ToinUser[] = [
-	{
-		id: 1,
-		fullName: 'Nguyễn Văn A',
-		email: 'nguyenvana@toin.com',
-		username: 'nguyenvana',
-		role: 'ADMIN',
-		department: 'IT',
-		isActive: true,
-		joinedDate: '2024-01-15',
-	},
-	{
-		id: 2,
-		fullName: 'Trần Thị B',
-		email: 'tranthib@toin.com',
-		username: 'tranthib',
-		role: 'MANAGER',
-		department: 'HR',
-		isActive: true,
-		joinedDate: '2024-02-20',
-	},
-	{
-		id: 3,
-		fullName: 'Lê Văn C',
-		email: 'levanc@toin.com',
-		username: 'levanc',
-		role: 'STAFF',
-		department: 'Sales',
-		isActive: true,
-		joinedDate: '2024-03-10',
-	},
-	{
-		id: 4,
-		fullName: 'Phạm Thị D',
-		email: 'phamthid@toin.com',
-		username: 'phamthid',
-		role: 'STAFF',
-		department: 'IT',
-		isActive: false,
-		joinedDate: '2024-04-05',
-	},
-	{
-		id: 5,
-		fullName: 'Hoàng Văn E',
-		email: 'hoangvane@toin.com',
-		username: 'hoangvane',
-		role: 'MANAGER',
-		department: 'Finance',
-		isActive: true,
-		joinedDate: '2024-05-12',
-	},
-];
+import ToinUserFormModal from './ToinUserFormModal';
 
 const roleLabels: Record<string, string> = {
-	ADMIN: 'Quản trị viên',
-	MANAGER: 'Quản lý',
-	STAFF: 'Nhân viên',
+	[Position.INTERN]: 'Thực tập sinh',
+	[Position.STAFF]: 'Nhân viên',
+	[Position.MANAGER]: 'Quản lý',
+	[Position.DIRECTOR]: 'Giám đốc',
+	[Position.SENIOR_MANAGER]: 'Quản lý cấp cao',
+	[Position.LEADER]: 'Trưởng nhóm',
+	[Position.ASM]: 'ASM',
+	[Position.CHIEF_ACCOUNTANT]: 'Kế toán trưởng',
+	[Position.SUPERVISOR]: 'Giám sát viên',
+	[Position.TONG_GIAM_DOC]: 'Tổng Giám Đốc',
+	[Position.PHO_TONG_GIAM_DOC]: 'Phó Tổng Giám Đốc',
+	[Position.DEVELOPER]: 'Lập trình viên',
 };
 
 const roleColors: Record<
 	string,
 	{ bg: string; text: string; icon: keyof typeof Ionicons.glyphMap }
 > = {
-	ADMIN: {
+	[Position.TONG_GIAM_DOC]: {
 		bg: AppColors.danger + '15',
 		text: AppColors.danger,
 		icon: 'shield-checkmark-outline',
 	},
-	MANAGER: {
+	[Position.PHO_TONG_GIAM_DOC]: {
+		bg: AppColors.danger + '15',
+		text: AppColors.danger,
+		icon: 'shield-checkmark-outline',
+	},
+	[Position.DIRECTOR]: {
+		bg: AppColors.danger + '15',
+		text: AppColors.danger,
+		icon: 'shield-checkmark-outline',
+	},
+	[Position.MANAGER]: {
 		bg: AppColors.warning + '15',
 		text: AppColors.warningDark,
 		icon: 'briefcase-outline',
 	},
-	STAFF: {
+	[Position.SENIOR_MANAGER]: {
+		bg: AppColors.warning + '15',
+		text: AppColors.warningDark,
+		icon: 'briefcase-outline',
+	},
+	[Position.LEADER]: {
+		bg: AppColors.info + '15',
+		text: AppColors.infoDark,
+		icon: 'people-outline',
+	},
+	[Position.STAFF]: {
 		bg: AppColors.info + '15',
 		text: AppColors.infoDark,
 		icon: 'person-outline',
 	},
+	[Position.DEVELOPER]: {
+		bg: AppColors.primary + '15',
+		text: AppColors.primary,
+		icon: 'code-slash-outline',
+	},
+	[Position.INTERN]: {
+		bg: AppColors.textMuted + '15',
+		text: AppColors.textMuted,
+		icon: 'school-outline',
+	},
 };
 
 const ToinUserScreen = () => {
+	const navigation = useNavigation();
+	const {
+		toinUserData,
+		isLoading,
+		isError,
+		error,
+		onGetAllToinUsers,
+		isFetching,
+	} = useGetAllToinUsers();
+
 	const [search, setSearch] = useState('');
-	const [roleFilter, setRoleFilter] = useState<string>('ALL');
+	const [positionFilter, setPositionFilter] = useState<string>('ALL');
 	const [statusFilter, setStatusFilter] = useState<
 		'ALL' | 'ACTIVE' | 'INACTIVE'
 	>('ALL');
+	const [refreshing, setRefreshing] = useState(false);
+	const [showFormModal, setShowFormModal] = useState(false);
+	const [selectedUser, setSelectedUser] = useState<ToinUserResponse | null>(
+		null
+	);
+	const [formMode, setFormMode] = useState<'create' | 'edit'>('create');
+
+	const deleteMutation = useDeleteToinUser();
 
 	// Filter logic
 	const filteredUsers = useMemo(() => {
-		let result = MOCK_USERS;
+		let result = toinUserData;
 
-		// Filter by role
-		if (roleFilter !== 'ALL') {
-			result = result.filter((user) => user.role === roleFilter);
+		// Filter by position
+		if (positionFilter !== 'ALL') {
+			result = result.filter((user) => user.position === positionFilter);
 		}
 
 		// Filter by status
 		if (statusFilter === 'ACTIVE') {
-			result = result.filter((user) => user.isActive);
+			result = result.filter((user) => !user.isDeleted);
 		} else if (statusFilter === 'INACTIVE') {
-			result = result.filter((user) => !user.isActive);
+			result = result.filter((user) => user.isDeleted);
 		}
 
 		// Filter by search
@@ -125,28 +127,86 @@ const ToinUserScreen = () => {
 			const query = search.toLowerCase();
 			result = result.filter(
 				(user) =>
-					user.fullName.toLowerCase().includes(query) ||
+					user.firstname.toLowerCase().includes(query) ||
+					user.lastname.toLowerCase().includes(query) ||
 					user.email.toLowerCase().includes(query) ||
-					user.username.toLowerCase().includes(query) ||
-					user.department.toLowerCase().includes(query)
+					user.department.toLowerCase().includes(query) ||
+					user.phone_number.toLowerCase().includes(query)
 			);
 		}
 
 		return result;
-	}, [search, roleFilter, statusFilter]);
+	}, [toinUserData, search, positionFilter, statusFilter]);
 
 	// Stats
 	const stats = useMemo(() => {
 		return {
-			total: MOCK_USERS.length,
-			active: MOCK_USERS.filter((u) => u.isActive).length,
-			inactive: MOCK_USERS.filter((u) => !u.isActive).length,
+			total: toinUserData.length,
+			active: toinUserData.filter((u) => !u.isDeleted).length,
+			inactive: toinUserData.filter((u) => u.isDeleted).length,
 			filtered: filteredUsers.length,
 		};
-	}, [filteredUsers]);
+	}, [toinUserData, filteredUsers]);
 
-	const renderUserItem = ({ item }: { item: ToinUser }) => {
-		const roleConfig = roleColors[item.role];
+	// Reload function
+	const onRefresh = useCallback(() => {
+		setRefreshing(true);
+		onGetAllToinUsers().finally(() => {
+			setRefreshing(false);
+		});
+	}, [onGetAllToinUsers]);
+
+	const handleCreateUser = () => {
+		setFormMode('create');
+		setSelectedUser(null);
+		setShowFormModal(true);
+	};
+
+	const handleEditUser = (user: ToinUserResponse) => {
+		setFormMode('edit');
+		setSelectedUser(user);
+		setShowFormModal(true);
+	};
+
+	const handleDeleteUser = (user: ToinUserResponse) => {
+		Alert.alert(
+			'Xác nhận xóa',
+			`Bạn có chắc chắn muốn xóa người dùng "${user.firstname} ${user.lastname}"?`,
+			[
+				{
+					text: 'Hủy',
+					style: 'cancel',
+				},
+				{
+					text: 'Xóa',
+					style: 'destructive',
+					onPress: async () => {
+						try {
+							await deleteMutation.mutateAsync(user.id);
+							Toast.show({
+								type: 'success',
+								text1: 'Thành công',
+								text2: 'Đã xóa người dùng',
+							});
+						} catch (error: any) {
+							Toast.show({
+								type: 'error',
+								text1: 'Lỗi',
+								text2:
+									error.message || 'Không thể xóa người dùng',
+							});
+						}
+					},
+				},
+			]
+		);
+	};
+
+	const renderUserItem = ({ item }: { item: ToinUserResponse }) => {
+		const roleConfig =
+			roleColors[item.position] || roleColors[Position.STAFF];
+		const fullName = `${item.firstname} ${item.lastname}`;
+		const isActive = !item.isDeleted;
 		return (
 			<Card
 				padding="$4"
@@ -165,6 +225,12 @@ const ToinUserScreen = () => {
 				}}
 				animation="quick"
 				borderRadius="$4"
+				onPress={() => {
+					(navigation as any).navigate(
+						NavigationRoutes.TOIN_USER_DETAIL,
+						{ userId: item.id }
+					);
+				}}
 			>
 				<XStack gap="$3" alignItems="flex-start">
 					{/* Avatar */}
@@ -183,7 +249,7 @@ const ToinUserScreen = () => {
 							fontWeight="700"
 							color={AppColors.primary}
 						>
-							{item.fullName.charAt(0)}
+							{fullName.charAt(0)}
 						</Text>
 					</YStack>
 
@@ -200,7 +266,7 @@ const ToinUserScreen = () => {
 									color={AppColors.text}
 									numberOfLines={1}
 								>
-									{item.fullName}
+									{fullName}
 								</Text>
 								<XStack
 									gap="$2"
@@ -220,7 +286,8 @@ const ToinUserScreen = () => {
 										fontWeight="700"
 										color={roleConfig.text}
 									>
-										{roleLabels[item.role]}
+										{roleLabels[item.position] ||
+											item.position}
 									</Text>
 								</XStack>
 							</YStack>
@@ -230,7 +297,7 @@ const ToinUserScreen = () => {
 								paddingHorizontal="$2"
 								paddingVertical={4}
 								backgroundColor={
-									item.isActive
+									isActive
 										? AppColors.successLight
 										: AppColors.textMuted + '20'
 								}
@@ -240,12 +307,12 @@ const ToinUserScreen = () => {
 									fontSize={10}
 									fontWeight="700"
 									color={
-										item.isActive
+										isActive
 											? AppColors.successDark
 											: AppColors.textMuted
 									}
 								>
-									{item.isActive ? 'Hoạt động' : 'Ngưng'}
+									{isActive ? 'Hoạt động' : 'Ngưng'}
 								</Text>
 							</XStack>
 						</XStack>
@@ -269,12 +336,12 @@ const ToinUserScreen = () => {
 						<XStack gap="$3" flexWrap="wrap">
 							<XStack gap="$1" alignItems="center">
 								<Ionicons
-									name="person-circle-outline"
+									name="call-outline"
 									size={14}
 									color={AppColors.textMuted}
 								/>
 								<Text fontSize={12} color={AppColors.textMuted}>
-									@{item.username}
+									{item.phone_number}
 								</Text>
 							</XStack>
 							<Text fontSize={12} color={AppColors.textMuted}>
@@ -310,11 +377,81 @@ const ToinUserScreen = () => {
 								)}
 							</Text>
 						</XStack>
+
+						{/* Action Buttons */}
+						<XStack gap="$2" marginTop="$2">
+							<Button
+								flex={1}
+								size="$2"
+								backgroundColor={AppColors.info + '20'}
+								color={AppColors.info}
+								borderWidth={1}
+								borderColor={AppColors.info}
+								icon={
+									<Ionicons name="create-outline" size={16} />
+								}
+								onPress={() => handleEditUser(item)}
+								pressStyle={{ opacity: 0.7 }}
+							>
+								Sửa
+							</Button>
+							<Button
+								flex={1}
+								size="$2"
+								backgroundColor={AppColors.danger + '20'}
+								color={AppColors.danger}
+								borderWidth={1}
+								borderColor={AppColors.danger}
+								icon={
+									<Ionicons name="trash-outline" size={16} />
+								}
+								onPress={() => handleDeleteUser(item)}
+								pressStyle={{ opacity: 0.7 }}
+								disabled={deleteMutation.isPending}
+							>
+								Xóa
+							</Button>
+						</XStack>
 					</YStack>
 				</XStack>
 			</Card>
 		);
 	};
+
+	// Handle retry for errors
+	const handleRetry = useCallback(() => {
+		console.log('Retrying fetch...');
+		onGetAllToinUsers();
+	}, [onGetAllToinUsers]);
+
+	// Early returns for loading and error states
+	if (isError) {
+		return (
+			<YStack
+				flex={1}
+				justifyContent="center"
+				alignItems="center"
+				padding="$4"
+				gap="$4"
+				backgroundColor={AppColors.background}
+			>
+				<Text fontSize={18} fontWeight="700" color={AppColors.danger}>
+					⚠️ Lỗi
+				</Text>
+				<Text color={AppColors.textSecondary} textAlign="center">
+					{error?.message || 'Không thể tải dữ liệu người dùng'}
+				</Text>
+				<Button
+					backgroundColor={AppColors.primary}
+					color="white"
+					fontWeight="700"
+					onPress={handleRetry}
+				>
+					Thử lại
+				</Button>
+			</YStack>
+		);
+	}
 
 	return (
 		<YStack
@@ -453,36 +590,44 @@ const ToinUserScreen = () => {
 						Lọc theo chức vụ
 					</Text>
 					<XStack gap="$2" flexWrap="wrap">
-						{['ALL', 'ADMIN', 'MANAGER', 'STAFF'].map((role) => (
+						{[
+							'ALL',
+							Position.MANAGER,
+							Position.STAFF,
+							Position.DEVELOPER,
+							Position.INTERN,
+						].map((position) => (
 							<Button
-								key={role}
+								key={position}
 								size="$3"
 								backgroundColor={
-									roleFilter === role
+									positionFilter === position
 										? AppColors.primary
 										: AppColors.surface
 								}
 								color={
-									roleFilter === role
+									positionFilter === position
 										? 'white'
 										: AppColors.textSecondary
 								}
 								borderWidth={1}
 								borderColor={
-									roleFilter === role
+									positionFilter === position
 										? AppColors.primary
 										: AppColors.border
 								}
 								pressStyle={{
 									scale: 0.95,
 								}}
-								onPress={() => setRoleFilter(role)}
+								onPress={() => setPositionFilter(position)}
 								fontWeight="600"
 								fontSize={13}
 								borderRadius="$8"
 								paddingHorizontal="$4"
 							>
-								{role === 'ALL' ? 'Tất cả' : roleLabels[role]}
+								{position === 'ALL'
+									? 'Tất cả'
+									: roleLabels[position] || position}
 							</Button>
 						))}
 					</XStack>
@@ -517,6 +662,7 @@ const ToinUserScreen = () => {
 								color="white"
 							/>
 						}
+						onPress={handleCreateUser}
 					>
 						Thêm mới
 					</Button>
@@ -524,29 +670,43 @@ const ToinUserScreen = () => {
 			</YStack>
 
 			{/* User List */}
-			<FlatList
-				data={filteredUsers}
-				keyExtractor={(item) => item.id.toString()}
-				renderItem={renderUserItem}
-				contentContainerStyle={{ paddingBottom: 140, gap: 12 }}
-				showsVerticalScrollIndicator={false}
-				ListEmptyComponent={
-					<YStack
-						padding="$6"
-						justifyContent="center"
-						alignItems="center"
-						gap="$3"
-					>
-						<Ionicons
-							name="people-outline"
-							size={64}
-							color={AppColors.textMuted}
-						/>
-						<Text fontSize={16} color={AppColors.textSecondary}>
-							Không tìm thấy người dùng
-						</Text>
-					</YStack>
-				}
+			{isLoading ? (
+				<LoadingIndicator data={''} />
+			) : (
+				<FlatList
+					data={filteredUsers}
+					keyExtractor={(item) => item.id.toString()}
+					renderItem={renderUserItem}
+					contentContainerStyle={{ paddingBottom: 140, gap: 12 }}
+					showsVerticalScrollIndicator={false}
+					refreshing={refreshing}
+					onRefresh={onRefresh}
+					ListEmptyComponent={
+						<YStack
+							padding="$6"
+							justifyContent="center"
+							alignItems="center"
+							gap="$3"
+						>
+							<Ionicons
+								name="people-outline"
+								size={64}
+								color={AppColors.textMuted}
+							/>
+							<Text fontSize={16} color={AppColors.textSecondary}>
+								Không tìm thấy người dùng
+							</Text>
+						</YStack>
+					}
+				/>
+			)}
+
+			{/* Form Modal */}
+			<ToinUserFormModal
+				visible={showFormModal}
+				onClose={() => setShowFormModal(false)}
+				user={selectedUser}
+				mode={formMode}
 			/>
 		</YStack>
 	);

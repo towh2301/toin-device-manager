@@ -1,53 +1,53 @@
 {
-  "expo": {
-    "name": "toin-device-manager",
-    "slug": "toin-device-manager",
-    "version": "1.0.0",
-    "orientation": "portrait",
-    "icon": "./src/assets/icons/favicon.ico",
-    "scheme": "toindevicemanager",
-    "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
-    "ios": {
-      "supportsTablet": true
-    },
-    "android": {
-      "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./src/assets/images/design.png",
-        "backgroundImage": "./src/assets/images/design.png",
-        "monochromeImage": "./src/assets/images/design.png"
-      },
-      "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.toindevicemanager"
-    },
-    "web": {
-      "output": "static",
-      "favicon": "./src/assets/icons/favicon.ico"
-    },
-    "plugins": [
-      "expo-router",
-      [
-        "expo-splash-screen",
-        {
-          "image": "./assets/images/design.png",
-          "imageWidth": 200,
-          "resizeMode": "contain",
-          "backgroundColor": "#ffffff",
-          "dark": {
-            "backgroundColor": "#000000"
-          }
-        }
-      ],
-      "react-native-vision-camera"
-    ],
-    "experiments": {
-      "typedRoutes": true,
-      "reactCompiler": false
-    },
-    "extra": {
-      "apiUrl": "http://192.168.2.18:3000/api/v1"
-    }
-  }
+	"expo": {
+		"name": "toin-device-manager",
+		"slug": "toin-device-manager",
+		"version": "1.0.0",
+		"orientation": "portrait",
+		"icon": "./src/assets/icons/favicon.ico",
+		"scheme": "toindevicemanager",
+		"userInterfaceStyle": "automatic",
+		"newArchEnabled": true,
+		"ios": {
+			"supportsTablet": true
+		},
+		"android": {
+			"adaptiveIcon": {
+				"backgroundColor": "#E6F4FE",
+				"foregroundImage": "./src/assets/images/design.png",
+				"backgroundImage": "./src/assets/images/design.png",
+				"monochromeImage": "./src/assets/images/design.png"
+			},
+			"edgeToEdgeEnabled": true,
+			"predictiveBackGestureEnabled": false,
+			"package": "com.anonymous.toindevicemanager"
+		},
+		"web": {
+			"output": "static",
+			"favicon": "./src/assets/icons/favicon.ico"
+		},
+		"plugins": [
+			"expo-router",
+			[
+				"expo-splash-screen",
+				{
+					"image": "./assets/images/design.png",
+					"imageWidth": 200,
+					"resizeMode": "contain",
+					"backgroundColor": "#ffffff",
+					"dark": {
+						"backgroundColor": "#000000"
+					}
+				}
+			],
+			"react-native-vision-camera"
+		],
+		"experiments": {
+			"typedRoutes": true,
+			"reactCompiler": false
+		},
+		"extra": {
+			"apiUrl": "http://192.168.61.147:3000/api/v1"
+		}
+	}
 }
