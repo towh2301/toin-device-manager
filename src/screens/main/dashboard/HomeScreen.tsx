@@ -1,696 +1,549 @@
-import { AppColors } from '@/src/common/app-color';
-import { StatusBadge } from '@/src/components/StatusBadge';
-import { NavigationRoutes } from '@/src/navigation/types';
-import { useGetAllDevices } from '@/src/services/device';
-import { useAuthStore } from '@/src/store';
-import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
-import { DeviceResponse, DeviceStatus } from '@services/device/types';
-import React, { useMemo } from 'react';
-import { FlatList, TouchableOpacity } from 'react-native';
-import { Button, Card, Separator, Text, XStack, YStack } from 'tamagui';
+import { AppColors } from "@/src/common/app-color";
+import { StatusBadge } from "@/src/components/StatusBadge";
+import { NavigationRoutes } from "@/src/navigation/types";
+import { useGetAllDevices } from "@/src/services/device";
+import { useAuthStore } from "@/src/store";
+import { Ionicons } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
+import { DeviceResponse, DeviceStatus } from "@services/device/types";
+import React, { useMemo } from "react";
+import { Pressable, ScrollView, TouchableOpacity } from "react-native";
+import { Button, Card, Separator, Text, XStack, YStack } from "tamagui";
 
 const statusLabels: Record<DeviceStatus, string> = {
-	[DeviceStatus.AVAILABLE]: 'Sẵn sàng',
-	[DeviceStatus.IN_USE]: 'Đang dùng',
-	[DeviceStatus.MAINTENANCE]: 'Bảo trì',
-	[DeviceStatus.RETIREMENT]: 'Ngưng dùng',
+  [DeviceStatus.AVAILABLE]: "Sẵn sàng",
+  [DeviceStatus.IN_USE]: "Đang dùng",
+  [DeviceStatus.MAINTENANCE]: "Bảo trì",
+  [DeviceStatus.RETIREMENT]: "Ngưng dùng",
 };
 
 const statusColors: Record<DeviceStatus, { bg: string; text: string }> = {
-	[DeviceStatus.AVAILABLE]: {
-		bg: AppColors.successLight,
-		text: AppColors.successDark,
-	},
-	[DeviceStatus.IN_USE]: {
-		bg: AppColors.infoLight,
-		text: AppColors.infoDark,
-	},
-	[DeviceStatus.MAINTENANCE]: {
-		bg: AppColors.warningLight,
-		text: AppColors.warningDark,
-	},
-	[DeviceStatus.RETIREMENT]: {
-		bg: '#F3F4F6',
-		text: '#6B7280',
-	},
+  [DeviceStatus.AVAILABLE]: {
+    bg: AppColors.successLight,
+    text: AppColors.successDark,
+  },
+  [DeviceStatus.IN_USE]: {
+    bg: AppColors.infoLight,
+    text: AppColors.infoDark,
+  },
+  [DeviceStatus.MAINTENANCE]: {
+    bg: AppColors.warningLight,
+    text: AppColors.warningDark,
+  },
+  [DeviceStatus.RETIREMENT]: {
+    bg: "#F3F4F6",
+    text: "#6B7280",
+  },
 };
 
 const HomeScreen = () => {
-	const {
-		deviceData,
-		isLoading,
-		isError,
-		error,
-		onGetAllDevices,
-		isFetching,
-	} = useGetAllDevices();
-	const navigation = useNavigation<any>();
-	const { user } = useAuthStore();
+  const { deviceData, isLoading, isError, error, onGetAllDevices, isFetching } =
+    useGetAllDevices();
+  const navigation = useNavigation<any>();
+  const { user } = useAuthStore();
 
-	const [isStatsExpanded, setIsStatsExpanded] = React.useState(true);
+  const [isStatsExpanded, setIsStatsExpanded] = React.useState(true);
 
-	const stats = useMemo(() => {
-		if (!deviceData) {
-			return {
-				total: 0,
-				byStatus: {
-					[DeviceStatus.AVAILABLE]: 0,
-					[DeviceStatus.IN_USE]: 0,
-					[DeviceStatus.MAINTENANCE]: 0,
-					[DeviceStatus.RETIREMENT]: 0,
-				},
-			};
-		}
+  const stats = useMemo(() => {
+    if (!deviceData) {
+      return {
+        total: 0,
+        byStatus: {
+          [DeviceStatus.AVAILABLE]: 0,
+          [DeviceStatus.IN_USE]: 0,
+          [DeviceStatus.MAINTENANCE]: 0,
+          [DeviceStatus.RETIREMENT]: 0,
+        },
+      };
+    }
 
-		const total = deviceData.length;
-		const byStatus: Record<DeviceStatus, number> = {
-			[DeviceStatus.AVAILABLE]: 0,
-			[DeviceStatus.IN_USE]: 0,
-			[DeviceStatus.MAINTENANCE]: 0,
-			[DeviceStatus.RETIREMENT]: 0,
-		};
-		for (const d of deviceData)
-			byStatus[d.status] = (byStatus[d.status] || 0) + 1;
-		return { total, byStatus };
-	}, [deviceData]);
+    const total = deviceData.length;
+    const byStatus: Record<DeviceStatus, number> = {
+      [DeviceStatus.AVAILABLE]: 0,
+      [DeviceStatus.IN_USE]: 0,
+      [DeviceStatus.MAINTENANCE]: 0,
+      [DeviceStatus.RETIREMENT]: 0,
+    };
+    for (const d of deviceData)
+      byStatus[d.status] = (byStatus[d.status] || 0) + 1;
+    return { total, byStatus };
+  }, [deviceData]);
 
-	// Lấy 6 thiết bị mới nhất
-	const recentDevices = useMemo(() => {
-		if (!deviceData) return [];
-		return deviceData.slice(0, 6);
-	}, [deviceData]);
+  const recentDevices = useMemo(() => {
+    if (!deviceData) return [];
+    return deviceData.slice(0, 6);
+  }, [deviceData]);
 
-	// Get greeting based on time
-	const getGreeting = () => {
-		const hour = new Date().getHours();
-		if (hour < 12) return 'Chào buổi sáng';
-		if (hour < 18) return 'Chào buổi chiều';
-		return 'Chào buổi tối';
-	};
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Chào buổi sáng";
+    if (hour < 18) return "Chào buổi chiều";
+    return "Chào buổi tối";
+  };
 
-	// Nhận 1 device duy nhất - Thiết kế mới đẹp hơn
-	const renderDeviceItem = ({ item }: { item: DeviceResponse }) => {
-		// Get device type icon
-		const getDeviceIcon = (
-			type: string
-		): keyof typeof Ionicons.glyphMap => {
-			const iconMap: Record<string, keyof typeof Ionicons.glyphMap> = {
-				SMARTPHONE: 'phone-portrait',
-				TABLET: 'tablet-portrait',
-				LAPTOP: 'laptop',
-				DESKTOP: 'desktop',
-				MONITOR: 'tv',
-				PRINTER: 'print',
-				CAMERA: 'camera',
-				ROUTER: 'wifi',
-				SWITCH: 'git-network',
-				OTHER: 'cube',
-			};
-			return iconMap[type] || 'cube-outline';
-		};
+  const getDeviceIcon = (type: string): keyof typeof Ionicons.glyphMap => {
+    const iconMap: Record<string, keyof typeof Ionicons.glyphMap> = {
+      SMARTPHONE: "phone-portrait",
+      TABLET: "tablet-portrait",
+      LAPTOP: "laptop",
+      DESKTOP: "desktop",
+      MONITOR: "tv",
+      PRINTER: "print",
+      CAMERA: "camera",
+      ROUTER: "wifi",
+      SWITCH: "git-network",
+      OTHER: "cube",
+    };
+    return iconMap[type] || "cube-outline";
+  };
 
-		return (
-			<TouchableOpacity
-				key={item.id}
-				activeOpacity={0.7}
-				onPress={() =>
-					navigation.navigate(NavigationRoutes.DEVICE, {
-						screen: NavigationRoutes.DEVICE_DETAIL,
-						params: { serialNumber: item.serialNumber },
-					})
-				}
-			>
-				<Card
-					padding="$0"
-					bordered
-					backgroundColor={AppColors.surface}
-					borderColor={AppColors.border}
-					borderWidth={1}
-					shadowColor={AppColors.shadowLight}
-					shadowRadius={8}
-					shadowOffset={{ width: 0, height: 3 }}
-					elevation={4}
-					animation="quick"
-					borderRadius="$5"
-					overflow="hidden"
-				>
-					{/* Header with gradient-like effect */}
-					<XStack
-						backgroundColor={AppColors.primary + '08'}
-						padding="$3"
-						borderBottomWidth={1}
-						borderBottomColor={AppColors.border}
-					>
-						<XStack gap="$3" alignItems="center" flex={1}>
-							{/* Device Icon with gradient background */}
-							<YStack
-								width={48}
-								height={48}
-								backgroundColor={AppColors.primary}
-								borderRadius="$4"
-								justifyContent="center"
-								alignItems="center"
-								shadowColor={AppColors.primary}
-								shadowRadius={8}
-								shadowOffset={{ width: 0, height: 2 }}
-								elevation={3}
-							>
-								<Ionicons
-									name={getDeviceIcon(item.type)}
-									size={24}
-									color="white"
-								/>
-							</YStack>
+  const renderDeviceItem = ({ item }: { item: DeviceResponse }) => {
+    return (
+      <Pressable
+        key={item.id}
+        onPress={() =>
+          navigation.navigate(NavigationRoutes.DEVICE, {
+            screen: NavigationRoutes.DEVICE_DETAIL,
+            params: { serialNumber: item.serialNumber },
+          })
+        }
+        style={({ pressed }) => [
+          {
+            transform: [{ scale: pressed ? 0.98 : 1 }],
+          },
+        ]}
+      >
+        <Card
+          padding="$3.5"
+          bordered
+          backgroundColor={AppColors.surface}
+          borderColor={AppColors.border}
+          borderWidth={1}
+          shadowRadius={4}
+          shadowOffset={{ width: 0, height: 2 }}
+          elevation={2}
+          animation="quick"
+          borderRadius="$4"
+          hoverStyle={{ scale: 0.98 }}
+        >
+          <XStack gap="$3" alignItems="center">
+            {/* Device Icon */}
+            <YStack
+              width={44}
+              height={44}
+              backgroundColor={AppColors.primary + "15"}
+              borderRadius="$3"
+              justifyContent="center"
+              alignItems="center"
+            >
+              <Ionicons
+                name={getDeviceIcon(item.type)}
+                size={22}
+                color={AppColors.primary}
+              />
+            </YStack>
 
-							{/* Device Name & Status */}
-							<YStack flex={1} gap="$1">
-								<Text
-									fontSize={16}
-									fontWeight="800"
-									color={AppColors.text}
-									numberOfLines={1}
-								>
-									{item.name}
-								</Text>
-								<StatusBadge status={item.status} />
-							</YStack>
-						</XStack>
-					</XStack>
+            {/* Device Info */}
+            <YStack flex={1} gap="$1.5">
+              <XStack justifyContent="space-between" alignItems="center">
+                <Text
+                  fontSize={15}
+                  fontWeight="700"
+                  color={AppColors.text}
+                  numberOfLines={1}
+                  flex={1}
+                >
+                  {item.name}
+                </Text>
+                <StatusBadge status={item.status} />
+              </XStack>
 
-					{/* Body */}
-					<YStack padding="$3" gap="$2.5">
-						{/* Serial Number */}
-						<XStack
-							gap="$2"
-							alignItems="center"
-							backgroundColor={AppColors.primaryLight + '15'}
-							padding="$2"
-							borderRadius="$3"
-						>
-							<Ionicons
-								name="pricetag"
-								size={16}
-								color={AppColors.primary}
-							/>
-							<Text
-								fontSize={13}
-								color={AppColors.primary}
-								fontWeight="700"
-								flex={1}
-							>
-								{item.serialNumber}
-							</Text>
-						</XStack>
+              <XStack gap="$2" alignItems="center">
+                <Ionicons
+                  name="pricetag-outline"
+                  size={13}
+                  color={AppColors.textMuted}
+                />
+                <Text
+                  fontSize={12}
+                  color={AppColors.textSecondary}
+                  numberOfLines={1}
+                >
+                  {item.serialNumber}
+                </Text>
+              </XStack>
 
-						{/* Brand & Type */}
-						<XStack gap="$2" alignItems="center">
-							<YStack
-								flex={1}
-								backgroundColor={AppColors.background}
-								padding="$2"
-								borderRadius="$2"
-							>
-								<Text fontSize={10} color={AppColors.textMuted}>
-									Thương hiệu
-								</Text>
-								<Text
-									fontSize={13}
-									fontWeight="600"
-									color={AppColors.text}
-								>
-									{item.brand}
-								</Text>
-							</YStack>
-							<YStack
-								flex={1}
-								backgroundColor={AppColors.background}
-								padding="$2"
-								borderRadius="$2"
-							>
-								<Text fontSize={10} color={AppColors.textMuted}>
-									Loại
-								</Text>
-								<Text
-									fontSize={13}
-									fontWeight="600"
-									color={AppColors.text}
-								>
-									{item.type}
-								</Text>
-							</YStack>
-						</XStack>
+              <XStack gap="$3">
+                <XStack gap="$1.5" alignItems="center">
+                  <Ionicons
+                    name="business-outline"
+                    size={12}
+                    color={AppColors.textMuted}
+                  />
+                  <Text fontSize={11} color={AppColors.textMuted}>
+                    {item.brand}
+                  </Text>
+                </XStack>
+                <XStack gap="$1.5" alignItems="center">
+                  <Ionicons
+                    name="layers-outline"
+                    size={12}
+                    color={AppColors.textMuted}
+                  />
+                  <Text fontSize={11} color={AppColors.textMuted}>
+                    {item.type}
+                  </Text>
+                </XStack>
+              </XStack>
+            </YStack>
 
-						{/* Purchase Date */}
-						<XStack gap="$2" alignItems="center">
-							<Ionicons
-								name="calendar"
-								size={14}
-								color={AppColors.textSecondary}
-							/>
-							<Text fontSize={12} color={AppColors.textSecondary}>
-								Mua ngày:{' '}
-								<Text fontWeight="600">
-									{item.purchasedDate
-										? new Date(
-												item.purchasedDate
-											).toLocaleDateString('vi-VN')
-										: 'N/A'}
-								</Text>
-							</Text>
-						</XStack>
-					</YStack>
+            {/* Arrow */}
+            <Ionicons
+              name="chevron-forward"
+              size={18}
+              color={AppColors.textMuted}
+            />
+          </XStack>
+        </Card>
+      </Pressable>
+    );
+  };
 
-					{/* Footer with action hint */}
-					<XStack
-						backgroundColor={AppColors.background}
-						padding="$2"
-						justifyContent="center"
-						alignItems="center"
-						borderTopWidth={1}
-						borderTopColor={AppColors.border}
-						gap="$1"
-					>
-						<Text fontSize={11} color={AppColors.textMuted}>
-							Nhấn để xem chi tiết
-						</Text>
-						<Ionicons
-							name="chevron-forward"
-							size={12}
-							color={AppColors.textMuted}
-						/>
-					</XStack>
-				</Card>
-			</TouchableOpacity>
-		);
-	};
-	return (
-		<YStack
-			flex={1}
-			backgroundColor={AppColors.background}
-			paddingTop={46}
-			paddingHorizontal={16}
-		>
-			{/* Dashboard cố định */}
-			<YStack gap="$4" paddingBottom="$4">
-				{/* Welcome Banner */}
-				<Card
-					padding="$4"
-					backgroundColor={AppColors.primary}
-					borderWidth={0}
-					shadowColor={AppColors.shadowMedium}
-					shadowRadius={12}
-					shadowOffset={{ width: 0, height: 4 }}
-					elevation={4}
-					borderRadius="$4"
-				>
-					<YStack gap="$2">
-						<Text fontSize={15} color="white" opacity={0.95}>
-							{getGreeting()} 👋
-						</Text>
-						<Text fontSize={24} fontWeight="800" color="white">
-							{user?.fullName || 'User'}
-						</Text>
-						<XStack gap="$2" alignItems="center" marginTop="$1">
-							<Ionicons
-								name="briefcase-outline"
-								size={16}
-								color="white"
-							/>
-							<Text
-								fontSize={13}
-								color="white"
-								opacity={0.9}
-								fontWeight="600"
-							>
-								{user?.role || 'Staff'}
-							</Text>
-						</XStack>
-					</YStack>
-				</Card>
+  return (
+    <YStack
+      flex={1}
+      backgroundColor={AppColors.background}
+      paddingTop={46}
+      paddingHorizontal={16}
+    >
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 120 }}
+      >
+        <YStack gap="$4">
+          {/* Welcome Header - Simplified */}
+          <YStack
+            backgroundColor={AppColors.primary}
+            padding="$4"
+            borderRadius="$4"
+            shadowColor={AppColors.shadowMedium}
+            shadowRadius={8}
+            shadowOffset={{ width: 0, height: 2 }}
+            elevation={3}
+          >
+            <Text fontSize={14} color="white" opacity={0.9}>
+              {getGreeting()} 👋
+            </Text>
+            <Text fontSize={22} fontWeight="800" color="white" marginTop="$1">
+              {user?.fullName || "User"}
+            </Text>
+            <XStack gap="$2" alignItems="center" marginTop="$2">
+              <Ionicons name="briefcase-outline" size={14} color="white" />
+              <Text fontSize={12} color="white" opacity={0.85} fontWeight="600">
+                {user?.role || "Staff"}
+              </Text>
+            </XStack>
+          </YStack>
 
-				{/* Stats Cards - Thiết kế mới với Expandable */}
-				<YStack gap="$2">
-					<TouchableOpacity
-						onPress={() => setIsStatsExpanded(!isStatsExpanded)}
-						activeOpacity={0.7}
-					>
-						<XStack
-							justifyContent="space-between"
-							alignItems="center"
-							paddingBottom="$2"
-						>
-							<YStack flex={1}>
-								<Text
-									fontSize={18}
-									fontWeight="700"
-									color={AppColors.text}
-								>
-									Thống kê thiết bị
-								</Text>
-								{!isStatsExpanded && (
-									<Text
-										fontSize={12}
-										color={AppColors.textSecondary}
-									>
-										{stats.total} thiết bị • Nhấn để xem chi
-										tiết
-									</Text>
-								)}
-							</YStack>
-							<YStack
-								width={36}
-								height={36}
-								backgroundColor={AppColors.primary + '15'}
-								borderRadius="$8"
-								justifyContent="center"
-								alignItems="center"
-							>
-								<Ionicons
-									name={
-										isStatsExpanded
-											? 'chevron-up'
-											: 'chevron-down'
-									}
-									size={20}
-									color={AppColors.primary}
-								/>
-							</YStack>
-						</XStack>
-					</TouchableOpacity>
+          {/* Stats Section - Collapsible */}
+          <Card
+            bordered
+            padding="$0"
+            backgroundColor={AppColors.surface}
+            borderColor={AppColors.border}
+            borderWidth={1}
+            shadowColor={AppColors.shadowLight}
+            shadowRadius={4}
+            shadowOffset={{ width: 0, height: 2 }}
+            elevation={2}
+            borderRadius="$4"
+            overflow="hidden"
+          >
+            {/* Header */}
+            <TouchableOpacity
+              onPress={() => setIsStatsExpanded(!isStatsExpanded)}
+              activeOpacity={0.7}
+            >
+              <XStack
+                padding="$3.5"
+                justifyContent="space-between"
+                alignItems="center"
+                backgroundColor={AppColors.background}
+              >
+                <YStack flex={1}>
+                  <Text fontSize={16} fontWeight="700" color={AppColors.text}>
+                    Tổng quan
+                  </Text>
+                  <Text
+                    fontSize={12}
+                    color={AppColors.textSecondary}
+                    marginTop="$0.5"
+                  >
+                    {stats.total} thiết bị
+                  </Text>
+                </YStack>
+                <XStack gap="$2" alignItems="center">
+                  <Button
+                    size="$2"
+                    chromeless
+                    circular
+                    icon={
+                      <Ionicons
+                        name="refresh"
+                        size={16}
+                        color={AppColors.primary}
+                      />
+                    }
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      onGetAllDevices();
+                    }}
+                    opacity={isFetching ? 0.5 : 1}
+                  />
+                  <YStack
+                    width={32}
+                    height={32}
+                    backgroundColor={AppColors.primary + "10"}
+                    borderRadius="$8"
+                    justifyContent="center"
+                    alignItems="center"
+                  >
+                    <Ionicons
+                      name={isStatsExpanded ? "chevron-up" : "chevron-down"}
+                      size={18}
+                      color={AppColors.primary}
+                    />
+                  </YStack>
+                </XStack>
+              </XStack>
+            </TouchableOpacity>
 
-					{isStatsExpanded && (
-						<XStack gap="$3" flexWrap="wrap">
-							{/* Total Card */}
-							<Card
-								padding="$4"
-								bordered
-								flex={1}
-								minWidth="100%"
-								backgroundColor={AppColors.primary}
-								borderColor={AppColors.primaryDark}
-								borderWidth={0}
-								shadowColor={AppColors.shadowMedium}
-								shadowRadius={10}
-								shadowOffset={{ width: 0, height: 3 }}
-								elevation={4}
-								borderRadius="$4"
-							>
-								<XStack
-									justifyContent="space-between"
-									alignItems="center"
-								>
-									<YStack gap="$1" flex={1}>
-										<Text
-											fontSize={14}
-											color="white"
-											opacity={0.95}
-										>
-											Tổng thiết bị
-										</Text>
-										<Text
-											fontSize={40}
-											fontWeight="900"
-											color="white"
-											lineHeight={44}
-										>
-											{stats.total}
-										</Text>
-										<Text
-											fontSize={12}
-											color="white"
-											opacity={0.85}
-										>
-											{isFetching
-												? '⟳ Đang đồng bộ...'
-												: '✓ Đã cập nhật'}
-										</Text>
-									</YStack>
-									<YStack
-										width={70}
-										height={70}
-										backgroundColor="white"
-										opacity={0.2}
-										borderRadius="$10"
-										justifyContent="center"
-										alignItems="center"
-									>
-										<Ionicons
-											name="apps"
-											size={40}
-											color="white"
-										/>
-									</YStack>
-								</XStack>
-							</Card>
+            {/* Expanded Content */}
+            {isStatsExpanded && (
+              <YStack>
+                <Separator borderColor={AppColors.border} />
 
-							{/* Status Cards */}
-							{Object.entries(stats.byStatus).map(
-								([key, val]) => {
-									const statusKey = key as DeviceStatus;
-									const colors = statusColors[statusKey];
-									const statusIcons: Record<
-										DeviceStatus,
-										keyof typeof Ionicons.glyphMap
-									> = {
-										[DeviceStatus.AVAILABLE]:
-											'checkmark-circle-outline',
-										[DeviceStatus.IN_USE]: 'time-outline',
-										[DeviceStatus.MAINTENANCE]:
-											'construct-outline',
-										[DeviceStatus.RETIREMENT]:
-											'close-circle-outline',
-									};
-									return (
-										<Card
-											key={key}
-											padding="$4"
-											bordered
-											flex={1}
-											minWidth="47%"
-											backgroundColor={colors.bg}
-											borderColor={colors.text + '20'}
-											borderWidth={1.5}
-											shadowColor={AppColors.shadowLight}
-											shadowRadius={6}
-											shadowOffset={{
-												width: 0,
-												height: 2,
-											}}
-											elevation={2}
-											borderRadius="$4"
-										>
-											<YStack gap="$2">
-												<XStack
-													justifyContent="space-between"
-													alignItems="flex-start"
-												>
-													<YStack gap="$1" flex={1}>
-														<Text
-															fontSize={12}
-															color={colors.text}
-															opacity={0.85}
-															fontWeight="600"
-														>
-															{
-																statusLabels[
-																	statusKey
-																]
-															}
-														</Text>
-														<Text
-															fontSize={28}
-															fontWeight="900"
-															color={colors.text}
-															lineHeight={32}
-														>
-															{val}
-														</Text>
-													</YStack>
-													<YStack
-														width={38}
-														height={38}
-														backgroundColor={
-															colors.text + '20'
-														}
-														borderRadius="$8"
-														justifyContent="center"
-														alignItems="center"
-													>
-														<Ionicons
-															name={
-																statusIcons[
-																	statusKey
-																]
-															}
-															size={20}
-															color={colors.text}
-														/>
-													</YStack>
-												</XStack>
-											</YStack>
-										</Card>
-									);
-								}
-							)}
-						</XStack>
-					)}
-				</YStack>
+                {/* Stats Grid */}
+                <YStack padding="$3.5" gap="$3">
+                  {/* Total Card - Full Width */}
+                  <Card
+                    padding="$3.5"
+                    backgroundColor={AppColors.primary}
+                    borderWidth={0}
+                    shadowColor={AppColors.primary}
+                    shadowRadius={6}
+                    shadowOffset={{ width: 0, height: 2 }}
+                    elevation={2}
+                    borderRadius="$3"
+                  >
+                    <XStack justifyContent="space-between" alignItems="center">
+                      <YStack>
+                        <Text fontSize={13} color="white" opacity={0.9}>
+                          Tổng thiết bị
+                        </Text>
+                        <Text
+                          fontSize={36}
+                          fontWeight="900"
+                          color="white"
+                          lineHeight={40}
+                        >
+                          {stats.total}
+                        </Text>
+                      </YStack>
+                      <YStack
+                        width={56}
+                        height={56}
+                        backgroundColor="white"
+                        opacity={0.2}
+                        borderRadius="$8"
+                        justifyContent="center"
+                        alignItems="center"
+                      >
+                        <Ionicons name="apps" size={32} color="white" />
+                      </YStack>
+                    </XStack>
+                  </Card>
 
-				<Separator borderColor={AppColors.border} />
+                  {/* Status Cards - 2x2 Grid */}
+                  <XStack gap="$2.5" flexWrap="wrap">
+                    {Object.entries(stats.byStatus).map(([key, val]) => {
+                      const statusKey = key as DeviceStatus;
+                      const colors = statusColors[statusKey];
+                      const statusIcons: Record<
+                        DeviceStatus,
+                        keyof typeof Ionicons.glyphMap
+                      > = {
+                        [DeviceStatus.AVAILABLE]: "checkmark-circle",
+                        [DeviceStatus.IN_USE]: "time",
+                        [DeviceStatus.MAINTENANCE]: "construct",
+                        [DeviceStatus.RETIREMENT]: "close-circle",
+                      };
+                      return (
+                        <Card
+                          key={key}
+                          padding="$3"
+                          flex={1}
+                          minWidth="47%"
+                          backgroundColor={colors.bg}
+                          borderWidth={0}
+                          shadowColor={colors.text}
+                          shadowRadius={3}
+                          shadowOffset={{ width: 0, height: 1 }}
+                          elevation={1}
+                          borderRadius="$3"
+                        >
+                          <XStack
+                            justifyContent="space-between"
+                            alignItems="flex-start"
+                          >
+                            <YStack gap="$1">
+                              <Text
+                                fontSize={11}
+                                color={colors.text}
+                                opacity={0.8}
+                                fontWeight="600"
+                              >
+                                {statusLabels[statusKey]}
+                              </Text>
+                              <Text
+                                fontSize={24}
+                                fontWeight="900"
+                                color={colors.text}
+                                lineHeight={26}
+                              >
+                                {val}
+                              </Text>
+                            </YStack>
+                            <YStack
+                              width={32}
+                              height={32}
+                              backgroundColor={colors.text + "20"}
+                              borderRadius="$6"
+                              justifyContent="center"
+                              alignItems="center"
+                            >
+                              <Ionicons
+                                name={statusIcons[statusKey]}
+                                size={16}
+                                color={colors.text}
+                              />
+                            </YStack>
+                          </XStack>
+                        </Card>
+                      );
+                    })}
+                  </XStack>
+                </YStack>
 
-				{/* Recent Devices Section */}
-				<XStack justifyContent="space-between" alignItems="center">
-					<YStack>
-						<Text
-							fontSize={20}
-							fontWeight="700"
-							color={AppColors.text}
-						>
-							Thiết bị mới nhất
-						</Text>
-						<Text fontSize={13} color={AppColors.textSecondary}>
-							6 thiết bị gần đây
-						</Text>
-					</YStack>
-					<Button
-						size="$3"
-						backgroundColor={AppColors.primaryLight}
-						pressStyle={{
-							backgroundColor: AppColors.primary,
-							scale: 0.95,
-						}}
-						borderRadius="$8"
-						fontWeight="600"
-						onPress={() => onGetAllDevices()}
-						height="auto"
-						color={AppColors.infoLight}
-						paddingVertical={4}
-					>
-						<Ionicons
-							name="refresh-circle-outline"
-							size={20}
-							color={AppColors.infoLight}
-						/>
-						Làm mới
-					</Button>
-				</XStack>
+                <Separator borderColor={AppColors.border} />
 
-				{isLoading && (
-					<Text color={AppColors.textSecondary}>Đang tải...</Text>
-				)}
-				{isError && (
-					<Text color={AppColors.danger}>{error?.message}</Text>
-				)}
-			</YStack>
+                {/* Recent Devices */}
+                <YStack padding="$3.5" gap="$3">
+                  <XStack justifyContent="space-between" alignItems="center">
+                    <Text fontSize={15} fontWeight="700" color={AppColors.text}>
+                      Thiết bị gần đây
+                    </Text>
+                    <Text fontSize={11} color={AppColors.textMuted}>
+                      {recentDevices.length} thiết bị
+                    </Text>
+                  </XStack>
 
-			{/* Device List - Chỉ phần này scroll */}
-			<FlatList
-				data={recentDevices}
-				keyExtractor={(item) => item.id.toString()}
-				renderItem={({ item }) => renderDeviceItem({ item })}
-				contentContainerStyle={{ paddingBottom: 140, gap: 12 }}
-				showsVerticalScrollIndicator={false}
-				ListFooterComponent={
-					deviceData && deviceData.length > 6 ? (
-						<YStack gap="$4" paddingTop="$3">
-							<Button
-								size="$4"
-								backgroundColor={AppColors.surface}
-								borderColor={AppColors.primary}
-								borderWidth={2}
-								pressStyle={{
-									backgroundColor: AppColors.primaryLight,
-									scale: 0.97,
-								}}
-								borderRadius="$10"
-								fontWeight="700"
-								color={AppColors.primary}
-								onPress={() =>
-									navigation.navigate(NavigationRoutes.DEVICE)
-								}
-							>
-								Xem tất cả {deviceData.length} thiết bị →
-							</Button>
+                  {isLoading && (
+                    <Text fontSize={12} color={AppColors.textSecondary}>
+                      Đang tải...
+                    </Text>
+                  )}
+                  {isError && (
+                    <Text fontSize={12} color={AppColors.danger}>
+                      {error?.message}
+                    </Text>
+                  )}
 
-							<Separator borderColor={AppColors.border} />
+                  {!isLoading && !isError && (
+                    <YStack gap="$2.5">
+                      {recentDevices.map((item) => (
+                        <React.Fragment key={item.id}>
+                          {renderDeviceItem({ item })}
+                        </React.Fragment>
+                      ))}
+                    </YStack>
+                  )}
 
-							{/* Quick Actions */}
-							<YStack gap="$3">
-								<Text
-									fontSize={20}
-									fontWeight="700"
-									color={AppColors.text}
-								>
-									Tác vụ nhanh
-								</Text>
-								<XStack gap="$3" flexWrap="wrap">
-									<Button
-										flex={1}
-										minWidth={150}
-										size="$4"
-										backgroundColor={AppColors.primary}
-										color="white"
-										pressStyle={{
-											backgroundColor:
-												AppColors.primaryDark,
-											scale: 0.97,
-										}}
-										borderRadius="$10"
-										fontWeight="700"
-										fontSize={15}
-										icon={
-											<Text fontSize={18} color="white">
-												📱
-											</Text>
-										}
-										onPress={() =>
-											navigation.navigate(
-												NavigationRoutes.DEVICE
-											)
-										}
-										height={30}
-									>
-										<Text>Quản lý thiết bị</Text>
-									</Button>
-									<Button
-										flex={1}
-										minWidth={150}
-										size="$4"
-										backgroundColor={AppColors.info}
-										color="white"
-										pressStyle={{
-											backgroundColor: AppColors.infoDark,
-											scale: 0.97,
-										}}
-										borderRadius="$10"
-										fontWeight="700"
-										fontSize={15}
-										icon={
-											<Text fontSize={18} color="white">
-												📷
-											</Text>
-										}
-										onPress={() =>
-											navigation.navigate(
-												NavigationRoutes.DEVICE,
-												{
-													screen: NavigationRoutes.QR_SCAN,
-												}
-											)
-										}
-										height="auto"
-									>
-										<Text>Quét mã QR</Text>
-									</Button>
-								</XStack>
-							</YStack>
-						</YStack>
-					) : null
-				}
-			/>
-		</YStack>
-	);
+                  {deviceData && deviceData.length > 6 && (
+                    <Button
+                      size="$3"
+                      backgroundColor="transparent"
+                      borderColor={AppColors.primary}
+                      borderWidth={1.5}
+                      pressStyle={{
+                        backgroundColor: AppColors.primaryLight,
+                        scale: 0.96,
+                      }}
+                      borderRadius="$3"
+                      fontWeight="700"
+                      color={AppColors.primary}
+                      onPress={() =>
+                        navigation.navigate(NavigationRoutes.DEVICE)
+                      }
+                      marginTop="$1"
+                      height={40}
+                    >
+                      <Text>Xem tất cả {deviceData.length} thiết bị →</Text>
+                    </Button>
+                  )}
+                </YStack>
+              </YStack>
+            )}
+          </Card>
+
+          {/* Quick Actions - Compact */}
+          <YStack gap="$2.5">
+            <Text fontSize={15} fontWeight="700" color={AppColors.text}>
+              Tác vụ nhanh
+            </Text>
+            <XStack gap="$2.5">
+              <Button
+                flex={1}
+                size="$3.5"
+                backgroundColor={AppColors.primary}
+                color="white"
+                pressStyle={{
+                  backgroundColor: AppColors.primaryDark,
+                  scale: 0.98,
+                }}
+                borderRadius="$3"
+                fontWeight="700"
+                icon={<Ionicons name="apps" size={18} color="white" />}
+                onPress={() => navigation.navigate(NavigationRoutes.DEVICE)}
+              >
+                Quản lý
+              </Button>
+              <Button
+                flex={1}
+                size="$3.5"
+                backgroundColor={AppColors.info}
+                color="white"
+                pressStyle={{
+                  backgroundColor: AppColors.infoDark,
+                  scale: 0.98,
+                }}
+                borderRadius="$3"
+                fontWeight="700"
+                icon={<Ionicons name="qr-code" size={18} color="white" />}
+                onPress={() =>
+                  navigation.navigate(NavigationRoutes.DEVICE, {
+                    screen: NavigationRoutes.QR_SCAN,
+                  })
+                }
+              >
+                Quét QR
+              </Button>
+            </XStack>
+          </YStack>
+        </YStack>
+      </ScrollView>
+    </YStack>
+  );
 };
 
 export default HomeScreen;
