@@ -1,6 +1,29 @@
 // Software Management Types - Based on API Documentation
 
 /**
+ * Account for software login
+ */
+export interface AccountResponse {
+	_id: string;
+	username: string;
+	password: string; // Encrypted
+	relatedEmail?: string;
+	note?: string;
+	createdAt: string;
+	updatedAt: string;
+}
+
+/**
+ * Account payload for creating/updating
+ */
+export interface AccountPayload {
+	username: string;
+	password: string;
+	relatedEmail?: string;
+	note?: string;
+}
+
+/**
  * Software Response from API
  * GET /software
  * GET /software/:id
@@ -9,12 +32,17 @@ export interface SoftwareResponse {
 	id: string;
 	name: string;
 	version?: string;
+	plan?: string;
 	license_key?: string;
+	licenseKey?: string;
 	purchased_date?: string; // ISO 8601 date string
+	purchaseDate?: string;
 	expiration_date?: string; // ISO 8601 date string
+	expiredDate?: string;
 	vendor?: string;
 	cost?: number;
 	notes?: string;
+	account?: AccountResponse; // Populated account
 	createdAt: string;
 	updatedAt: string;
 }
@@ -26,12 +54,17 @@ export interface SoftwareResponse {
 export interface SoftwareCreatePayload {
 	name: string;
 	version?: string;
+	plan?: string;
+	licenseKey?: string;
 	license_key?: string;
 	purchased_date?: string; // ISO 8601 format
+	purchaseDate?: string;
 	expiration_date?: string; // ISO 8601 format
+	expiredDate?: string;
 	vendor?: string;
 	cost?: number;
 	notes?: string;
+	account?: AccountPayload; // Account credentials
 }
 
 /**
@@ -42,12 +75,17 @@ export interface SoftwareCreatePayload {
 export interface SoftwareUpdatePayload {
 	name?: string;
 	version?: string;
+	plan?: string;
 	license_key?: string;
+	licenseKey?: string;
 	purchased_date?: string; // ISO 8601 format
+	purchaseDate?: string;
 	expiration_date?: string; // ISO 8601 format
+	expiredDate?: string;
 	vendor?: string;
 	cost?: number;
 	notes?: string;
+	account?: AccountPayload; // Account credentials
 }
 
 /**
