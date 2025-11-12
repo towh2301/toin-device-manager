@@ -1,11 +1,11 @@
 import HomeScreen from '@/src/screens/main/dashboard/HomeScreen';
 import ProfileScreen from '@/src/screens/main/profile/ProfileScreen';
-import ToinUserScreen from '@/src/screens/main/toin_user/ToinUserScreen';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import CustomFloatingBar from '@src/components/CustomFloatingBar';
 import React from 'react';
 import { BottomTabParamList, NavigationRoutes } from '../types';
 import DeviceNavigator from './DeviceNavigator';
+import ToinUserNavigator from './ToinUserNavigator';
 
 const Tab = createBottomTabNavigator<BottomTabParamList>();
 
@@ -49,7 +49,7 @@ const TabNavigator = () => {
 			/>
 			<Tab.Screen
 				name={NavigationRoutes.TOIN_USER}
-				component={ToinUserScreen}
+				component={ToinUserNavigator}
 				options={{ tabBarLabel: 'Users' }}
 			/>
 			<Tab.Screen

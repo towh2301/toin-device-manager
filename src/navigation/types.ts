@@ -1,4 +1,5 @@
 import { NavigatorScreenParams, RouteProp } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 // Enum for routes in the navigation stack
 export enum NavigationRoutes {
@@ -10,10 +11,10 @@ export enum NavigationRoutes {
 
 	// Toin user management screens
 	TOIN_USER = 'ToinUserScreen',
-	TOIN_USER_LIST = 'UserListScreen',
-	TOIN_USER_DETAIL = 'UserDetailScreen',
-	TOIN_USER_CREATE = 'UserCreateScreen',
-	TOIN_USER_EDIT = 'UserEditScreen',
+	TOIN_USER_LIST = 'ToinUserListScreen',
+	TOIN_USER_DETAIL = 'ToinUserDetailScreen',
+	TOIN_USER_CREATE = 'ToinUserCreateScreen',
+	TOIN_USER_EDIT = 'ToinUserEditScreen',
 
 	// Device Management Screens
 	DEVICE = 'DeviceScreen',
@@ -99,3 +100,12 @@ declare global {
 		interface RootParamList extends RootStackParamList {}
 	}
 }
+
+// Prop types
+type ToinUserNavigationProps =
+	NativeStackNavigationProp<ToinUserStackParamList>;
+
+type DeviceScreenNavigationProp =
+	NativeStackNavigationProp<DeviceStackParamList>;
+
+export { DeviceScreenNavigationProp, ToinUserNavigationProps };

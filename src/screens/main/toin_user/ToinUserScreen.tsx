@@ -2,6 +2,7 @@ import { AppColors } from '@/src/common/app-color';
 import LoadingIndicator from '@/src/components/LoadingIndicator';
 import { NavigationRoutes } from '@/src/navigation/types';
 import {
+	Department,
 	Position,
 	ToinUserResponse,
 	useDeleteToinUser,
@@ -101,6 +102,7 @@ const ToinUserScreen = () => {
 
 	const [search, setSearch] = useState('');
 	const [positionFilter, setPositionFilter] = useState<string>('ALL');
+	const [departmentFilter, setDepartmentFilter] = useState<string>('ALL');
 	const [refreshing, setRefreshing] = useState(false);
 	const [showFormModal, setShowFormModal] = useState(false);
 	const [selectedUser, setSelectedUser] = useState<ToinUserResponse | null>(
@@ -113,6 +115,10 @@ const ToinUserScreen = () => {
 	// === Filter & Stats ===
 	const filteredUsers = useMemo(() => {
 		let result = toinUserData || [];
+
+		if (departmentFilter !== 'ALL') {
+			result = result.filter((u) => u.department === departmentFilter);
+		}
 
 		if (positionFilter !== 'ALL') {
 			result = result.filter((u) => u.position === positionFilter);
@@ -131,7 +137,7 @@ const ToinUserScreen = () => {
 		}
 
 		return result;
-	}, [toinUserData, search, positionFilter]);
+	}, [toinUserData, search, positionFilter, departmentFilter]);
 
 	const stats = useMemo(
 		() => ({
@@ -209,7 +215,7 @@ const ToinUserScreen = () => {
 				pressStyle={{ scale: 0.97, borderColor: AppColors.primary }}
 				animation="quick"
 				onPress={() =>
-					navigation.navigate(NavigationRoutes.TOIN_USER_DETAIL, {
+					navigation.push(NavigationRoutes.TOIN_USER_DETAIL, {
 						userId: item.id,
 					})
 				}
@@ -588,6 +594,85 @@ const ToinUserScreen = () => {
 										{position === 'ALL'
 											? 'Tất cả'
 											: roleLabels[position] || position}
+									</Text>
+								</Button>
+							))}
+						</XStack>
+					</YStack>
+
+					{/* Department Filter */}
+					<YStack gap="$2">
+						<Text
+							fontSize={13}
+							fontWeight="700"
+							color={AppColors.text}
+						>
+							Lọc theo phòng ban
+						</Text>
+						<XStack gap="$2" flexWrap="wrap">
+							<Button
+								key="ALL"
+								size="$3"
+								backgroundColor={
+									departmentFilter === 'ALL'
+										? AppColors.accent1
+										: AppColors.surface
+								}
+								borderWidth={1}
+								borderColor={
+									departmentFilter === 'ALL'
+										? AppColors.accent1
+										: AppColors.border
+								}
+								pressStyle={{ scale: 0.95 }}
+								onPress={() => setDepartmentFilter('ALL')}
+								borderRadius="$8"
+								paddingHorizontal="$4"
+								height="auto"
+							>
+								<Text
+									fontSize={13}
+									fontWeight="600"
+									color={
+										departmentFilter === 'ALL'
+											? 'white'
+											: AppColors.text
+									}
+								>
+									Tất cả
+								</Text>
+							</Button>
+							{Object.values(Department).map((dept) => (
+								<Button
+									key={dept}
+									size="$3"
+									backgroundColor={
+										departmentFilter === dept
+											? AppColors.accent1
+											: AppColors.surface
+									}
+									borderWidth={1}
+									borderColor={
+										departmentFilter === dept
+											? AppColors.accent1
+											: AppColors.border
+									}
+									pressStyle={{ scale: 0.95 }}
+									onPress={() => setDepartmentFilter(dept)}
+									borderRadius="$8"
+									paddingHorizontal="$4"
+									height="auto"
+								>
+									<Text
+										fontSize={13}
+										fontWeight="600"
+										color={
+											departmentFilter === dept
+												? 'white'
+												: AppColors.text
+										}
+									>
+										{dept}
 									</Text>
 								</Button>
 							))}

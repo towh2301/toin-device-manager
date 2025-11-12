@@ -1,4 +1,5 @@
 import { AppColors } from '@/src/common/app-color';
+import { NavigationRoutes } from '@/src/navigation/types';
 import { useLogin } from '@/src/services/auth/useLogin';
 import { useAuthStore } from '@/src/store/auth.store';
 import { useNavigation } from '@react-navigation/native';
@@ -40,7 +41,7 @@ const LoginScreen = () => {
 				await setTokens(access_token, refresh_token);
 				await setUser(user);
 				Toast.show({ type: 'success', text1: 'Đăng nhập thành công' });
-				navigation.replace('AppStack');
+				navigation.replace(NavigationRoutes.DASHBOARD);
 			} catch (error) {
 				console.error('Error saving auth data:', error);
 				Toast.show({

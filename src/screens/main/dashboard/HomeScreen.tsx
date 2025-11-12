@@ -1,7 +1,8 @@
 import { AppColors } from '@/src/common/app-color';
 import { StatusBadge } from '@/src/components/StatusBadge';
 import { NavigationRoutes } from '@/src/navigation/types';
-import { useGetAllDevices } from '@/src/services/device';
+import { useGetAllAssignments, useGetAllDevices } from '@/src/services/device';
+import { useGetAllToinUsers } from '@/src/services/toin-user';
 import { useAuthStore } from '@/src/store';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -45,6 +46,8 @@ const HomeScreen = () => {
 		onGetAllDevices,
 		isFetching,
 	} = useGetAllDevices();
+	const { toinUserData } = useGetAllToinUsers();
+	const { data: assignmentsResponse } = useGetAllAssignments();
 	const navigation = useNavigation<any>();
 	const { user } = useAuthStore();
 
@@ -74,6 +77,18 @@ const HomeScreen = () => {
 			byStatus[d.status] = (byStatus[d.status] || 0) + 1;
 		return { total, byStatus };
 	}, [deviceData]);
+
+	const userStats = useMemo(() => {
+		const assignments = assignmentsResponse?.data || [];
+		const activeAssignments = assignments.filter((a) => !a.returned_date);
+
+		return {
+			totalUsers: toinUserData?.length || 0,
+			activeUsers: toinUserData?.filter((u) => !u.isDeleted).length || 0,
+			totalAssignments: assignments.length,
+			activeAssignments: activeAssignments.length,
+		};
+	}, [toinUserData, assignmentsResponse]);
 
 	const recentDevices = useMemo(() => {
 		if (!deviceData) return [];
@@ -522,6 +537,183 @@ const HomeScreen = () => {
 												);
 											}
 										)}
+									</XStack>
+								</YStack>
+
+								<Separator borderColor={AppColors.border} />
+
+								{/* User & Assignment Stats */}
+								<YStack padding="$3.5" gap="$3">
+									<Text
+										fontSize={15}
+										fontWeight="700"
+										color={AppColors.text}
+									>
+										Nhân viên & Giao thiết bị
+									</Text>
+									<XStack gap="$2.5" flexWrap="wrap">
+										<Card
+											padding="$3"
+											flex={1}
+											minWidth="47%"
+											backgroundColor={
+												AppColors.accent1 + '20'
+											}
+											borderWidth={1}
+											borderColor={
+												AppColors.accent1 + '30'
+											}
+											borderRadius="$3"
+										>
+											<YStack gap="$1">
+												<XStack
+													justifyContent="space-between"
+													alignItems="center"
+												>
+													<Text
+														fontSize={11}
+														color={
+															AppColors.textSecondary
+														}
+														fontWeight="600"
+													>
+														Tổng nhân viên
+													</Text>
+													<Ionicons
+														name="people"
+														size={18}
+														color={
+															AppColors.accent1
+														}
+													/>
+												</XStack>
+												<Text
+													fontSize={24}
+													fontWeight="800"
+													color={AppColors.accent1}
+												>
+													{userStats.totalUsers}
+												</Text>
+												<Text
+													fontSize={10}
+													color={AppColors.textMuted}
+												>
+													{userStats.activeUsers} đang
+													hoạt động
+												</Text>
+											</YStack>
+										</Card>
+
+										<Card
+											padding="$3"
+											flex={1}
+											minWidth="47%"
+											backgroundColor={
+												AppColors.success + '20'
+											}
+											borderWidth={1}
+											borderColor={
+												AppColors.success + '30'
+											}
+											borderRadius="$3"
+										>
+											<YStack gap="$1">
+												<XStack
+													justifyContent="space-between"
+													alignItems="center"
+												>
+													<Text
+														fontSize={11}
+														color={
+															AppColors.textSecondary
+														}
+														fontWeight="600"
+													>
+														Đang giao
+													</Text>
+													<Ionicons
+														name="git-commit"
+														size={18}
+														color={
+															AppColors.success
+														}
+													/>
+												</XStack>
+												<Text
+													fontSize={24}
+													fontWeight="800"
+													color={AppColors.success}
+												>
+													{
+														userStats.activeAssignments
+													}
+												</Text>
+												<Text
+													fontSize={10}
+													color={AppColors.textMuted}
+												>
+													{userStats.totalAssignments}{' '}
+													tổng cộng
+												</Text>
+											</YStack>
+										</Card>
+									</XStack>
+								</YStack>
+
+								<Separator borderColor={AppColors.border} />
+
+								{/* Quick Actions */}
+								<YStack padding="$3.5" gap="$3">
+									<Text
+										fontSize={15}
+										fontWeight="700"
+										color={AppColors.text}
+									>
+										Thao tác nhanh
+									</Text>
+									<XStack gap="$2.5">
+										<Button
+											flex={1}
+											size="$3"
+											backgroundColor={AppColors.primary}
+											color="white"
+											icon={
+												<Ionicons
+													name="add-circle-outline"
+													size={18}
+												/>
+											}
+											onPress={() =>
+												navigation.navigate(
+													NavigationRoutes.DEVICE
+												)
+											}
+											borderRadius="$3"
+											fontWeight="600"
+										>
+											Thêm thiết bị
+										</Button>
+										<Button
+											flex={1}
+											size="$3"
+											backgroundColor={AppColors.accent1}
+											color="white"
+											icon={
+												<Ionicons
+													name="person-add-outline"
+													size={18}
+												/>
+											}
+											onPress={() =>
+												navigation.navigate(
+													NavigationRoutes.TOIN_USER
+												)
+											}
+											borderRadius="$3"
+											fontWeight="600"
+										>
+											Thêm nhân viên
+										</Button>
 									</XStack>
 								</YStack>
 

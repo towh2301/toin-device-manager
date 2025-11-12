@@ -491,8 +491,9 @@ export default function DeviceDetailScreen() {
 											fontWeight="700"
 											color={AppColors.primary}
 										>
-											{currentAssignment.assigned_to
-												?.fullname || 'Không rõ'}
+											{currentAssignment.assigned_to?.fullname?.charAt(
+												0
+											) || 'Không rõ'}
 										</Text>
 									</YStack>
 									<YStack flex={1}>
