@@ -11,6 +11,7 @@ import React, { useState } from 'react';
 import { Alert, Modal, ScrollView, TouchableOpacity } from 'react-native';
 import Toast from 'react-native-toast-message';
 import { Button, Card, Text, TextArea, XStack, YStack } from 'tamagui';
+import { useAuthStore } from '../store';
 
 interface AssignDeviceModalProps {
 	visible: boolean;
@@ -43,6 +44,9 @@ export default function AssignDeviceModal({
 	const { toinUserData: users, isLoading: usersLoading } =
 		useGetAllToinUsers();
 
+	// Get current user
+	const { user } = useAuthStore();
+
 	// Mutations
 	const assignMutation = useAssignDevice();
 
@@ -59,10 +63,11 @@ export default function AssignDeviceModal({
 
 		try {
 			await assignMutation.mutateAsync({
-				deviceId: selectedDeviceId,
-				assignedTo: selectedUserId,
-				assignmentDate: assignDate.toISOString(),
-				notes: notes || undefined,
+				device: selectedDeviceId,
+				assigned_to: selectedUserId,
+				assigned_date: assignDate.toISOString(),
+				issued_by: user?.id,
+				note: notes || undefined,
 			});
 
 			Toast.show({
@@ -113,6 +118,34 @@ export default function AssignDeviceModal({
 			animationType="slide"
 			onRequestClose={handleClose}
 		>
+			<XStack gap="$2" marginTop="$2" justifyContent="flex-end">
+				<Button
+					backgroundColor={AppColors.surface}
+					borderWidth={1}
+					borderColor={AppColors.border}
+					size="$2"
+					onPress={() =>
+						setAssignDate(
+							new Date(assignDate.getTime() - 24 * 60 * 60 * 1000)
+						)
+					}
+				>
+					◀ Ngày trước
+				</Button>
+				<Button
+					backgroundColor={AppColors.surface}
+					borderWidth={1}
+					borderColor={AppColors.border}
+					size="$2"
+					onPress={() =>
+						setAssignDate(
+							new Date(assignDate.getTime() + 24 * 60 * 60 * 1000)
+						)
+					}
+				>
+					Ngày sau ▶
+				</Button>
+			</XStack>
 			<YStack
 				flex={1}
 				backgroundColor="rgba(0,0,0,0.5)"
@@ -350,6 +383,7 @@ export default function AssignDeviceModal({
 							borderColor={AppColors.border}
 							onPress={handleClose}
 							disabled={assignMutation.isPending}
+							height={30}
 						>
 							Hủy
 						</Button>
@@ -363,6 +397,7 @@ export default function AssignDeviceModal({
 								!selectedDeviceId ||
 								!selectedUserId
 							}
+							height={30}
 						>
 							{assignMutation.isPending
 								? 'Đang gán...'

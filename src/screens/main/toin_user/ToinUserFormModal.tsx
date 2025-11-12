@@ -508,6 +508,7 @@ const ToinUserFormModal: React.FC<ToinUserFormModalProps> = ({
 							onPress={onClose}
 							pressStyle={{ opacity: 0.8 }}
 							borderRadius="$3"
+							height={40}
 						>
 							Hủy
 						</Button>
@@ -522,6 +523,7 @@ const ToinUserFormModal: React.FC<ToinUserFormModalProps> = ({
 							}
 							pressStyle={{ opacity: 0.8 }}
 							borderRadius="$3"
+							height={40}
 						>
 							{createMutation.isPending ||
 							updateMutation.isPending

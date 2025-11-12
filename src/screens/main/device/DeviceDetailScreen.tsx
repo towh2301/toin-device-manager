@@ -44,9 +44,8 @@ export default function DeviceDetailScreen() {
 		useGetDeviceBySerialNumber(serialNumber);
 
 	// Get device assignments and software
-	const { data: assignmentsResponse } = useGetDeviceAssignments(
-		deviceData?.id || ''
-	);
+	const { data: assignmentsResponse, refetch: refetchAssignments } =
+		useGetDeviceAssignments(deviceData?.id || '');
 	const { data: softwareResponse } = useGetDeviceSoftware(
 		deviceData?.id || ''
 	);
@@ -55,9 +54,9 @@ export default function DeviceDetailScreen() {
 	const assignments = assignmentsResponse?.data || [];
 	const softwareList = softwareResponse?.data || [];
 
-	// Find current assignment (returnDate is null/undefined)
+	// Find current assignment (returned_date is null/undefined)
 	const currentAssignment = assignments.find(
-		(assignment) => !assignment.returnDate
+		(assignment) => !assignment.returned_date
 	);
 
 	// Mutations
@@ -139,7 +138,7 @@ export default function DeviceDetailScreen() {
 
 		Alert.alert(
 			'Xác nhận thu hồi',
-			`Bạn có chắc muốn thu hồi thiết bị này từ ${currentAssignment.assignedTo}?`,
+			`Bạn có chắc muốn thu hồi thiết bị này từ ${currentAssignment.assigned_to?.fullname || 'Không rõ'}?`,
 			[
 				{ text: 'Hủy', style: 'cancel' },
 				{
@@ -150,6 +149,8 @@ export default function DeviceDetailScreen() {
 							await unassignMutation.mutateAsync(
 								currentAssignment.id
 							);
+							// Reset current assignment
+							refetchAssignments();
 							Alert.alert('✓ Thành công', 'Đã thu hồi thiết bị');
 						} catch (error: any) {
 							Alert.alert(
@@ -450,6 +451,7 @@ export default function DeviceDetailScreen() {
 										color="white"
 										onPress={handleUnassign}
 										disabled={unassignMutation.isPending}
+										height={24}
 									>
 										{unassignMutation.isPending
 											? 'Đang xử lý...'
@@ -461,6 +463,7 @@ export default function DeviceDetailScreen() {
 										backgroundColor={AppColors.primary}
 										color="white"
 										onPress={() => setShowAssignModal(true)}
+										height={24}
 									>
 										Giao thiết bị
 									</Button>
@@ -488,9 +491,8 @@ export default function DeviceDetailScreen() {
 											fontWeight="700"
 											color={AppColors.primary}
 										>
-											{currentAssignment.assignedTo?.charAt(
-												0
-											) || 'U'}
+											{currentAssignment.assigned_to
+												?.fullname || 'Không rõ'}
 										</Text>
 									</YStack>
 									<YStack flex={1}>
@@ -499,8 +501,8 @@ export default function DeviceDetailScreen() {
 											fontWeight="600"
 											color={AppColors.text}
 										>
-											{currentAssignment.assignedTo ||
-												'Không rõ'}
+											{currentAssignment.assigned_to
+												?.fullname || 'Không rõ'}
 										</Text>
 										<Text
 											fontSize={12}
@@ -508,16 +510,16 @@ export default function DeviceDetailScreen() {
 										>
 											Ngày giao:{' '}
 											{new Date(
-												currentAssignment.assignmentDate
+												currentAssignment.assigned_date
 											).toLocaleDateString('vi-VN')}
 										</Text>
-										{currentAssignment.notes && (
+										{currentAssignment.note && (
 											<Text
 												fontSize={11}
 												color={AppColors.textSecondary}
 												marginTop="$1"
 											>
-												📝 {currentAssignment.notes}
+												📝 {currentAssignment.note}
 											</Text>
 										)}
 									</YStack>

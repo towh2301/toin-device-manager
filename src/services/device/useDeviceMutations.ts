@@ -93,7 +93,7 @@ export function useAssignDevice() {
 		onSuccess: (data, variables) => {
 			// Invalidate device assignments
 			queryClient.invalidateQueries({
-				queryKey: [API_KEYS.DEVICE_ASSIGNMENTS, variables.deviceId],
+				queryKey: [API_KEYS.DEVICE_ASSIGNMENTS, variables.device],
 			});
 			queryClient.invalidateQueries({
 				queryKey: [API_KEYS.ALL_ASSIGNMENTS],

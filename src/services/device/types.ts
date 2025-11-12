@@ -1,3 +1,5 @@
+import { ToinUserResponse } from '../toin-user';
+
 interface DeviceResponse {
 	id: string;
 	name: string;
@@ -35,22 +37,21 @@ interface DeviceFilter {
 
 // Device Assignment Types
 interface DeviceAssignmentPayload {
-	deviceId: string;
-	userId?: string;
-	assignedTo?: string;
-	assignmentDate: string; // ISO 8601 format
-	returnDate?: string; // ISO 8601 format
-	notes?: string;
+	device: string;
+	assigned_to?: string;
+	issued_by?: string;
+	assigned_date: string; // ISO 8601 format
+	returned_date?: string; // ISO 8601 format
+	note?: string;
 }
 
 interface DeviceAssignmentResponse {
 	id: string;
-	deviceId: string;
-	userId?: string;
-	assignedTo?: string;
-	assignmentDate: string;
-	returnDate?: string;
-	notes?: string;
+	device: DeviceResponse;
+	assigned_to?: ToinUserResponse;
+	assigned_date: string;
+	returned_date?: string;
+	note?: string;
 	createdAt: string;
 	updatedAt: string;
 }

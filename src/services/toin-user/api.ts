@@ -33,7 +33,7 @@ const useToinUserApi = (baseURL = API_URL) => {
 	 * GET /toin-user/all
 	 */
 	const getToinUserList = async (params?: Record<string, any>) => {
-		const endpoint = '/toin-user/all';
+		const endpoint = '/toin-users/all';
 		try {
 			const { data } = await privateApi.get<
 				ApiResponseType<ToinUserResponse[]>
@@ -50,7 +50,7 @@ const useToinUserApi = (baseURL = API_URL) => {
 	 * GET /toin-user/:id
 	 */
 	const getToinUserById = async (id: string) => {
-		const endpoint = `/toin-user/${id}`;
+		const endpoint = `/toin-users/${id}`;
 		try {
 			const { data } =
 				await privateApi.get<ApiResponseType<ToinUserResponse>>(
@@ -68,7 +68,7 @@ const useToinUserApi = (baseURL = API_URL) => {
 	 * POST /toin-user/create
 	 */
 	const createToinUser = async (payload: ToinUserCreatePayload) => {
-		const endpoint = '/toin-user/create';
+		const endpoint = '/toin-users/create';
 		try {
 			const { data } = await privateApi.post<
 				ApiResponseType<ToinUserResponse>
@@ -88,7 +88,7 @@ const useToinUserApi = (baseURL = API_URL) => {
 		id: string,
 		payload: ToinUserUpdatePayload
 	) => {
-		const endpoint = `/toin-user/${id}`;
+		const endpoint = `/toin-users/${id}`;
 		try {
 			const { data } = await privateApi.patch<
 				ApiResponseType<ToinUserResponse>
@@ -105,7 +105,7 @@ const useToinUserApi = (baseURL = API_URL) => {
 	 * DELETE /toin-user/:id
 	 */
 	const deleteToinUser = async (id: string) => {
-		const endpoint = `/toin-user/${id}`;
+		const endpoint = `/toin-users/${id}`;
 		try {
 			const { data } = await privateApi.delete<
 				ApiResponseType<{
@@ -127,7 +127,7 @@ const useToinUserApi = (baseURL = API_URL) => {
 	 * GET /toin-user/departments/list
 	 */
 	const getDepartmentList = async () => {
-		const endpoint = '/toin-user/departments/list';
+		const endpoint = '/toin-users/departments/list';
 		try {
 			const { data } =
 				await privateApi.get<ApiResponseType<string[]>>(endpoint);

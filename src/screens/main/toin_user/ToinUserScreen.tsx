@@ -10,9 +10,22 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import React, { useCallback, useMemo, useState } from 'react';
-import { Alert, FlatList, TextInput, TouchableOpacity } from 'react-native';
+import {
+	Alert,
+	RefreshControl,
+	TextInput,
+	TouchableOpacity,
+} from 'react-native';
 import Toast from 'react-native-toast-message';
-import { Button, Card, Separator, Text, XStack, YStack } from 'tamagui';
+import {
+	Button,
+	Card,
+	ScrollView,
+	Separator,
+	Text,
+	XStack,
+	YStack,
+} from 'tamagui';
 import ToinUserFormModal from './ToinUserFormModal';
 
 const roleLabels: Record<string, string> = {
@@ -82,21 +95,12 @@ const roleColors: Record<
 };
 
 const ToinUserScreen = () => {
-	const navigation = useNavigation();
-	const {
-		toinUserData,
-		isLoading,
-		isError,
-		error,
-		onGetAllToinUsers,
-		isFetching,
-	} = useGetAllToinUsers();
+	const navigation = useNavigation<any>();
+	const { toinUserData, isLoading, isError, error, onGetAllToinUsers } =
+		useGetAllToinUsers();
 
 	const [search, setSearch] = useState('');
 	const [positionFilter, setPositionFilter] = useState<string>('ALL');
-	const [statusFilter, setStatusFilter] = useState<
-		'ALL' | 'ACTIVE' | 'INACTIVE'
-	>('ALL');
 	const [refreshing, setRefreshing] = useState(false);
 	const [showFormModal, setShowFormModal] = useState(false);
 	const [selectedUser, setSelectedUser] = useState<ToinUserResponse | null>(
@@ -106,56 +110,46 @@ const ToinUserScreen = () => {
 
 	const deleteMutation = useDeleteToinUser();
 
-	// Filter logic
+	// === Filter & Stats ===
 	const filteredUsers = useMemo(() => {
-		let result = toinUserData;
+		let result = toinUserData || [];
 
-		// Filter by position
 		if (positionFilter !== 'ALL') {
-			result = result.filter((user) => user.position === positionFilter);
+			result = result.filter((u) => u.position === positionFilter);
 		}
 
-		// Filter by status
-		if (statusFilter === 'ACTIVE') {
-			result = result.filter((user) => !user.isDeleted);
-		} else if (statusFilter === 'INACTIVE') {
-			result = result.filter((user) => user.isDeleted);
-		}
-
-		// Filter by search
 		if (search.trim()) {
-			const query = search.toLowerCase();
+			const q = search.toLowerCase();
 			result = result.filter(
-				(user) =>
-					user.firstname.toLowerCase().includes(query) ||
-					user.lastname.toLowerCase().includes(query) ||
-					user.email.toLowerCase().includes(query) ||
-					user.department.toLowerCase().includes(query) ||
-					user.phone_number.toLowerCase().includes(query)
+				(u) =>
+					u.firstname.toLowerCase().includes(q) ||
+					u.lastname.toLowerCase().includes(q) ||
+					u.email.toLowerCase().includes(q) ||
+					u.department.toLowerCase().includes(q) ||
+					u.phone_number.toLowerCase().includes(q)
 			);
 		}
 
 		return result;
-	}, [toinUserData, search, positionFilter, statusFilter]);
+	}, [toinUserData, search, positionFilter]);
 
-	// Stats
-	const stats = useMemo(() => {
-		return {
-			total: toinUserData.length,
-			active: toinUserData.filter((u) => !u.isDeleted).length,
-			inactive: toinUserData.filter((u) => u.isDeleted).length,
+	const stats = useMemo(
+		() => ({
+			total: toinUserData?.length || 0,
+			active: toinUserData?.filter((u) => !u.isDeleted).length || 0,
+			inactive: toinUserData?.filter((u) => u.isDeleted).length || 0,
 			filtered: filteredUsers.length,
-		};
-	}, [toinUserData, filteredUsers]);
+		}),
+		[toinUserData, filteredUsers]
+	);
 
-	// Reload function
+	// === Refresh ===
 	const onRefresh = useCallback(() => {
 		setRefreshing(true);
-		onGetAllToinUsers().finally(() => {
-			setRefreshing(false);
-		});
+		onGetAllToinUsers().finally(() => setRefreshing(false));
 	}, [onGetAllToinUsers]);
 
+	// === Actions ===
 	const handleCreateUser = () => {
 		setFormMode('create');
 		setSelectedUser(null);
@@ -171,29 +165,21 @@ const ToinUserScreen = () => {
 	const handleDeleteUser = (user: ToinUserResponse) => {
 		Alert.alert(
 			'Xác nhận xóa',
-			`Bạn có chắc chắn muốn xóa người dùng "${user.firstname} ${user.lastname}"?`,
+			`Xóa "${user.firstname} ${user.lastname}"?`,
 			[
-				{
-					text: 'Hủy',
-					style: 'cancel',
-				},
+				{ text: 'Hủy', style: 'cancel' },
 				{
 					text: 'Xóa',
 					style: 'destructive',
 					onPress: async () => {
 						try {
 							await deleteMutation.mutateAsync(user.id);
-							Toast.show({
-								type: 'success',
-								text1: 'Thành công',
-								text2: 'Đã xóa người dùng',
-							});
-						} catch (error: any) {
+							Toast.show({ type: 'success', text1: 'Đã xóa' });
+						} catch (err: any) {
 							Toast.show({
 								type: 'error',
 								text1: 'Lỗi',
-								text2:
-									error.message || 'Không thể xóa người dùng',
+								text2: err.message || 'Không thể xóa',
 							});
 						}
 					},
@@ -202,38 +188,33 @@ const ToinUserScreen = () => {
 		);
 	};
 
+	// === Render Item ===
 	const renderUserItem = ({ item }: { item: ToinUserResponse }) => {
-		const roleConfig =
-			roleColors[item.position] || roleColors[Position.STAFF];
+		const config = roleColors[item.position] || roleColors[Position.STAFF];
 		const fullName = `${item.firstname} ${item.lastname}`;
 		const isActive = !item.isDeleted;
+
 		return (
 			<Card
+				key={item.id}
 				padding="$4"
-				bordered
 				backgroundColor={AppColors.surface}
-				borderColor={AppColors.border}
 				borderWidth={1}
-				shadowColor={AppColors.shadowLight}
-				shadowRadius={6}
-				shadowOffset={{ width: 0, height: 2 }}
-				elevation={3}
-				pressStyle={{
-					scale: 0.97,
-					borderColor: AppColors.primary,
-					shadowRadius: 8,
-				}}
-				animation="quick"
+				borderColor={AppColors.border}
 				borderRadius="$4"
-				onPress={() => {
-					(navigation as any).navigate(
-						NavigationRoutes.TOIN_USER_DETAIL,
-						{ userId: item.id }
-					);
-				}}
+				shadowColor={AppColors.shadowLight}
+				shadowOffset={{ width: 0, height: 2 }}
+				shadowRadius={6}
+				elevation={3}
+				pressStyle={{ scale: 0.97, borderColor: AppColors.primary }}
+				animation="quick"
+				onPress={() =>
+					navigation.navigate(NavigationRoutes.TOIN_USER_DETAIL, {
+						userId: item.id,
+					})
+				}
 			>
 				<XStack gap="$3" alignItems="flex-start">
-					{/* Avatar */}
 					<YStack
 						width={56}
 						height={56}
@@ -249,11 +230,10 @@ const ToinUserScreen = () => {
 							fontWeight="700"
 							color={AppColors.primary}
 						>
-							{fullName.charAt(0)}
+							{fullName[0]}
 						</Text>
 					</YStack>
 
-					{/* User Info */}
 					<YStack flex={1} gap="$2">
 						<XStack
 							justifyContent="space-between"
@@ -269,22 +249,22 @@ const ToinUserScreen = () => {
 									{fullName}
 								</Text>
 								<XStack
-									gap="$2"
+									gap="$1.5"
 									paddingHorizontal="$2"
-									paddingVertical={3}
-									backgroundColor={roleConfig.bg}
+									paddingVertical="$1"
+									backgroundColor={config.bg}
 									borderRadius="$2"
 									alignSelf="flex-start"
 								>
 									<Ionicons
-										name={roleConfig.icon}
+										name={config.icon}
 										size={12}
-										color={roleConfig.text}
+										color={config.text}
 									/>
 									<Text
 										fontSize={11}
 										fontWeight="700"
-										color={roleConfig.text}
+										color={config.text}
 									>
 										{roleLabels[item.position] ||
 											item.position}
@@ -292,10 +272,9 @@ const ToinUserScreen = () => {
 								</XStack>
 							</YStack>
 
-							{/* Status Badge */}
 							<XStack
 								paddingHorizontal="$2"
-								paddingVertical={4}
+								paddingVertical="$1"
 								backgroundColor={
 									isActive
 										? AppColors.successLight
@@ -368,17 +347,11 @@ const ToinUserScreen = () => {
 							<Text fontSize={11} color={AppColors.textMuted}>
 								Tham gia:{' '}
 								{new Date(item.joinedDate).toLocaleDateString(
-									'vi-VN',
-									{
-										day: '2-digit',
-										month: '2-digit',
-										year: 'numeric',
-									}
+									'vi-VN'
 								)}
 							</Text>
 						</XStack>
 
-						{/* Action Buttons */}
 						<XStack gap="$2" marginTop="$2">
 							<Button
 								flex={1}
@@ -392,8 +365,9 @@ const ToinUserScreen = () => {
 								}
 								onPress={() => handleEditUser(item)}
 								pressStyle={{ opacity: 0.7 }}
+								height={24}
 							>
-								Sửa
+								<Text>Sửa</Text>
 							</Button>
 							<Button
 								flex={1}
@@ -408,8 +382,9 @@ const ToinUserScreen = () => {
 								onPress={() => handleDeleteUser(item)}
 								pressStyle={{ opacity: 0.7 }}
 								disabled={deleteMutation.isPending}
+								height={24}
 							>
-								Xóa
+								<Text>Xóa</Text>
 							</Button>
 						</XStack>
 					</YStack>
@@ -418,13 +393,10 @@ const ToinUserScreen = () => {
 		);
 	};
 
-	// Handle retry for errors
-	const handleRetry = useCallback(() => {
-		console.log('Retrying fetch...');
-		onGetAllToinUsers();
-	}, [onGetAllToinUsers]);
+	// === Filter Options ===
+	const filterOptions = ['ALL', ...Object.values(Position)];
 
-	// Early returns for loading and error states
+	// === Error State ===
 	if (isError) {
 		return (
 			<YStack
@@ -436,18 +408,17 @@ const ToinUserScreen = () => {
 				backgroundColor={AppColors.background}
 			>
 				<Text fontSize={18} fontWeight="700" color={AppColors.danger}>
-					⚠️ Lỗi
+					Lỗi
 				</Text>
 				<Text color={AppColors.textSecondary} textAlign="center">
-					{error?.message || 'Không thể tải dữ liệu người dùng'}
+					{error?.message || 'Không thể tải dữ liệu'}
 				</Text>
 				<Button
 					backgroundColor={AppColors.primary}
 					color="white"
-					fontWeight="700"
-					onPress={handleRetry}
+					onPress={() => onGetAllToinUsers()}
 				>
-					Thử lại
+					<Text>Thử lại</Text>
 				</Button>
 			</YStack>
 		);
@@ -457,237 +428,222 @@ const ToinUserScreen = () => {
 		<YStack
 			flex={1}
 			backgroundColor={AppColors.background}
-			paddingTop={60}
-			paddingHorizontal={16}
+			paddingTop="$10"
 		>
-			<YStack gap="$4" paddingBottom="$3">
-				{/* Header */}
-				<YStack gap="$2">
-					<Text fontSize={24} fontWeight="800" color={AppColors.text}>
-						Quản lý người dùng
-					</Text>
-					<Text fontSize={13} color={AppColors.textSecondary}>
-						Danh sách nhân viên TOIN
-					</Text>
-				</YStack>
-
-				{/* Search Bar */}
-				<XStack
-					gap="$2"
-					backgroundColor={AppColors.surface}
-					borderRadius="$3"
-					paddingHorizontal="$3"
-					paddingVertical="$2"
-					borderWidth={1}
-					borderColor={AppColors.border}
-					alignItems="center"
-					shadowColor={AppColors.shadowLight}
-					shadowRadius={4}
-					shadowOffset={{ width: 0, height: 1 }}
-					elevation={2}
-				>
-					<Ionicons
-						name="search-outline"
-						size={20}
-						color={AppColors.textSecondary}
+			<ScrollView
+				refreshControl={
+					<RefreshControl
+						refreshing={refreshing}
+						onRefresh={onRefresh}
 					/>
-					<TextInput
-						placeholder="Tìm theo tên, email, username..."
-						placeholderTextColor={AppColors.textMuted}
-						value={search}
-						onChangeText={setSearch}
-						style={{
-							flex: 1,
-							fontSize: 15,
-							color: AppColors.text,
-							paddingVertical: 8,
-						}}
-					/>
-					{search.length > 0 && (
-						<TouchableOpacity onPress={() => setSearch('')}>
-							<Ionicons
-								name="close-circle"
-								size={20}
-								color={AppColors.textMuted}
-							/>
-						</TouchableOpacity>
-					)}
-				</XStack>
+				}
+				showsVerticalScrollIndicator={false}
+			>
+				{/* Header + Filters */}
+				<YStack gap="$4" paddingBottom="$3" paddingHorizontal="$4">
+					<YStack gap="$2">
+						<Text
+							fontSize={24}
+							fontWeight="800"
+							color={AppColors.text}
+						>
+							Quản lý người dùng
+						</Text>
+						<Text fontSize={13} color={AppColors.textSecondary}>
+							Danh sách nhân viên TOIN
+						</Text>
+					</YStack>
 
-				{/* Stats Cards */}
-				<XStack gap="$3" flexWrap="wrap">
-					<Card
-						flex={1}
-						minWidth="30%"
-						padding="$3"
-						backgroundColor={AppColors.primary + '15'}
+					{/* Search */}
+					<XStack
+						gap="$2"
+						backgroundColor={AppColors.surface}
 						borderRadius="$3"
+						paddingHorizontal="$3"
+						paddingVertical="$2"
 						borderWidth={1}
-						borderColor={AppColors.primary + '30'}
+						borderColor={AppColors.border}
+						alignItems="center"
+						shadowColor={AppColors.shadowLight}
+						shadowRadius={4}
+						shadowOffset={{ width: 0, height: 1 }}
+						elevation={2}
 					>
-						<YStack alignItems="center" gap="$1">
-							<Text
-								fontSize={20}
-								fontWeight="800"
-								color={AppColors.primary}
-							>
-								{stats.total}
-							</Text>
-							<Text fontSize={11} color={AppColors.textSecondary}>
-								Tổng số
-							</Text>
-						</YStack>
-					</Card>
-					<Card
-						flex={1}
-						minWidth="30%"
-						padding="$3"
-						backgroundColor={AppColors.successLight + '40'}
-						borderRadius="$3"
-						borderWidth={1}
-						borderColor={AppColors.success + '30'}
-					>
-						<YStack alignItems="center" gap="$1">
-							<Text
-								fontSize={20}
-								fontWeight="800"
-								color={AppColors.success}
-							>
-								{stats.active}
-							</Text>
-							<Text fontSize={11} color={AppColors.textSecondary}>
-								Hoạt động
-							</Text>
-						</YStack>
-					</Card>
-					<Card
-						flex={1}
-						minWidth="30%"
-						padding="$3"
-						backgroundColor={AppColors.textMuted + '15'}
-						borderRadius="$3"
-						borderWidth={1}
-						borderColor={AppColors.textMuted + '30'}
-					>
-						<YStack alignItems="center" gap="$1">
-							<Text
-								fontSize={20}
-								fontWeight="800"
-								color={AppColors.textMuted}
-							>
-								{stats.inactive}
-							</Text>
-							<Text fontSize={11} color={AppColors.textSecondary}>
-								Ngưng
-							</Text>
-						</YStack>
-					</Card>
-				</XStack>
+						<Ionicons
+							name="search-outline"
+							size={20}
+							color={AppColors.textSecondary}
+						/>
+						<TextInput
+							placeholder="Tìm theo tên, email..."
+							placeholderTextColor={AppColors.textMuted}
+							value={search}
+							onChangeText={setSearch}
+							style={{
+								flex: 1,
+								fontSize: 15,
+								color: AppColors.text,
+								paddingVertical: 8,
+							}}
+						/>
+						{search ? (
+							<TouchableOpacity onPress={() => setSearch('')}>
+								<Ionicons
+									name="close-circle"
+									size={20}
+									color={AppColors.textMuted}
+								/>
+							</TouchableOpacity>
+						) : null}
+					</XStack>
 
-				{/* Filters */}
-				<YStack gap="$2">
-					<Text fontSize={13} fontWeight="700" color={AppColors.text}>
-						Lọc theo chức vụ
-					</Text>
-					<XStack gap="$2" flexWrap="wrap">
+					{/* Stats */}
+					<XStack gap="$3" flexWrap="wrap">
 						{[
-							'ALL',
-							Position.MANAGER,
-							Position.STAFF,
-							Position.DEVELOPER,
-							Position.INTERN,
-						].map((position) => (
-							<Button
-								key={position}
-								size="$3"
-								backgroundColor={
-									positionFilter === position
-										? AppColors.primary
-										: AppColors.surface
-								}
-								color={
-									positionFilter === position
-										? 'white'
-										: AppColors.textSecondary
-								}
+							{
+								value: stats.total,
+								label: 'Tổng số',
+								color: AppColors.primary,
+							},
+							{
+								value: stats.active,
+								label: 'Hoạt động',
+								color: AppColors.success,
+							},
+							{
+								value: stats.inactive,
+								label: 'Ngưng',
+								color: AppColors.textMuted,
+							},
+						].map((stat, i) => (
+							<Card
+								key={i}
+								flex={1}
+								minWidth="30%"
+								padding="$3"
+								backgroundColor={stat.color + '15'}
+								borderRadius="$3"
 								borderWidth={1}
-								borderColor={
-									positionFilter === position
-										? AppColors.primary
-										: AppColors.border
-								}
-								pressStyle={{
-									scale: 0.95,
-								}}
-								onPress={() => setPositionFilter(position)}
-								fontWeight="600"
-								fontSize={13}
-								borderRadius="$8"
-								paddingHorizontal="$4"
+								borderColor={stat.color + '30'}
 							>
-								{position === 'ALL'
-									? 'Tất cả'
-									: roleLabels[position] || position}
-							</Button>
+								<YStack alignItems="center" gap="$1">
+									<Text
+										fontSize={20}
+										fontWeight="800"
+										color={stat.color}
+									>
+										{stat.value}
+									</Text>
+									<Text
+										fontSize={11}
+										color={AppColors.textSecondary}
+									>
+										{stat.label}
+									</Text>
+								</YStack>
+							</Card>
 						))}
+					</XStack>
+
+					{/* Position Filter - Button Group */}
+					<YStack gap="$2">
+						<Text
+							fontSize={13}
+							fontWeight="700"
+							color={AppColors.text}
+						>
+							Lọc theo chức vụ
+						</Text>
+						<XStack gap="$2" flexWrap="wrap">
+							{filterOptions.map((position) => (
+								<Button
+									key={position}
+									size="$3"
+									backgroundColor={
+										positionFilter === position
+											? AppColors.primary
+											: AppColors.surface
+									}
+									borderWidth={1}
+									borderColor={
+										positionFilter === position
+											? AppColors.primary
+											: AppColors.border
+									}
+									pressStyle={{ scale: 0.95 }}
+									onPress={() => setPositionFilter(position)}
+									borderRadius="$8"
+									paddingHorizontal="$4"
+									height="auto"
+								>
+									<Text
+										fontSize={13}
+										fontWeight="600"
+										color={
+											positionFilter === position
+												? 'white'
+												: AppColors.text
+										}
+									>
+										{position === 'ALL'
+											? 'Tất cả'
+											: roleLabels[position] || position}
+									</Text>
+								</Button>
+							))}
+						</XStack>
+					</YStack>
+
+					<Separator borderColor={AppColors.border} />
+
+					{/* Result + Add Button */}
+					<XStack justifyContent="space-between" alignItems="center">
+						<Text fontSize={14} color={AppColors.textSecondary}>
+							Tìm thấy{' '}
+							<Text fontWeight="700" color={AppColors.primary}>
+								{stats.filtered}
+							</Text>{' '}
+							người dùng
+						</Text>
+						<Button
+							size="$2"
+							backgroundColor={AppColors.primary}
+							pressStyle={{
+								backgroundColor: AppColors.primaryDark,
+								scale: 0.95,
+							}}
+							borderRadius="$8"
+							fontWeight="600"
+							fontSize={12}
+							icon={
+								<Ionicons
+									name="add-circle-outline"
+									size={16}
+									color="white"
+								/>
+							}
+							onPress={handleCreateUser}
+							height={24}
+						>
+							<Text color="white">Thêm mới</Text>
+						</Button>
 					</XStack>
 				</YStack>
 
-				<Separator borderColor={AppColors.border} />
-
-				{/* Result Header */}
-				<XStack justifyContent="space-between" alignItems="center">
-					<Text fontSize={14} color={AppColors.textSecondary}>
-						Tìm thấy{' '}
-						<Text fontWeight="700" color={AppColors.primary}>
-							{stats.filtered}
-						</Text>{' '}
-						người dùng
-					</Text>
-					<Button
-						size="$2"
-						backgroundColor={AppColors.primary}
-						color="white"
-						pressStyle={{
-							backgroundColor: AppColors.primaryDark,
-							scale: 0.95,
-						}}
-						borderRadius="$8"
-						fontWeight="600"
-						fontSize={12}
-						icon={
-							<Ionicons
-								name="add-circle-outline"
-								size={16}
-								color="white"
-							/>
-						}
-						onPress={handleCreateUser}
-					>
-						Thêm mới
-					</Button>
-				</XStack>
-			</YStack>
-
-			{/* User List */}
-			{isLoading ? (
-				<LoadingIndicator data={''} />
-			) : (
-				<FlatList
-					data={filteredUsers}
-					keyExtractor={(item) => item.id.toString()}
-					renderItem={renderUserItem}
-					contentContainerStyle={{ paddingBottom: 140, gap: 12 }}
-					showsVerticalScrollIndicator={false}
-					refreshing={refreshing}
-					onRefresh={onRefresh}
-					ListEmptyComponent={
-						<YStack
-							padding="$6"
-							justifyContent="center"
-							alignItems="center"
-							gap="$3"
-						>
+				{/* User List */}
+				<ScrollView
+					style={{ paddingBottom: 130, paddingHorizontal: 16 }}
+					refreshControl={
+						<RefreshControl
+							refreshing={refreshing}
+							onRefresh={onRefresh}
+						/>
+					}
+				>
+					{isLoading ? (
+						<LoadingIndicator data={''} />
+					) : filteredUsers.length === 0 ? (
+						<YStack padding="$6" alignItems="center" gap="$3">
 							<Ionicons
 								name="people-outline"
 								size={64}
@@ -697,17 +653,23 @@ const ToinUserScreen = () => {
 								Không tìm thấy người dùng
 							</Text>
 						</YStack>
-					}
-				/>
-			)}
+					) : (
+						<YStack gap="$4">
+							{filteredUsers.map((user) =>
+								renderUserItem({ item: user })
+							)}
+						</YStack>
+					)}
+				</ScrollView>
 
-			{/* Form Modal */}
-			<ToinUserFormModal
-				visible={showFormModal}
-				onClose={() => setShowFormModal(false)}
-				user={selectedUser}
-				mode={formMode}
-			/>
+				{/* Form Modal */}
+				<ToinUserFormModal
+					visible={showFormModal}
+					onClose={() => setShowFormModal(false)}
+					user={selectedUser}
+					mode={formMode}
+				/>
+			</ScrollView>
 		</YStack>
 	);
 };

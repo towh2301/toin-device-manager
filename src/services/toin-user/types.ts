@@ -52,6 +52,7 @@ export interface ToinUserResponse {
 	id: string;
 	firstname: string;
 	lastname: string;
+	fullname?: string;
 	email: string;
 	phone_number: string;
 	department: string; // Department enum values

@@ -5,9 +5,9 @@
 
 export const AppColors = {
 	// Brand Colors - Primary Palette
-	primary: '#0A3D62', // Deep Navy/Dark Blue - Main brand color
-	primaryLight: '#2F6C97', // Lighter navy for hover states
-	primaryDark: '#082E4A', // Darker navy for pressed states
+	primary: '#03595b', // Deep Navy/Dark Blue - Main brand color
+	primaryLight: '#03898bff', // Lighter navy for hover states
+	primaryDark: '#024042ff', // Darker navy for pressed states
 
 	// Brand Colors - Secondary Palette
 	secondary: '#29667E', // Muted blue-grey

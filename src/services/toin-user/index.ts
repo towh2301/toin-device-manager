@@ -2,10 +2,10 @@
 export { default as toinUserApi } from './api';
 
 // Export Toin User Queries
-export * from './useQueries';
+export * from './useToinUserQueries';
 
 // Export Toin User Mutations
-export * from './useMutations';
+export * from './useToinUserMutations';
 
 // Export Toin User Types
 export * from './types';
