@@ -9,10 +9,11 @@ import {
 	useUpdateToinUser,
 } from '@/src/services/toin-user';
 import { Ionicons } from '@expo/vector-icons';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import React, { useEffect, useState } from 'react';
-import { Modal, ScrollView, TextInput, TouchableOpacity } from 'react-native';
+import { Modal, Platform, TextInput, TouchableOpacity } from 'react-native';
 import Toast from 'react-native-toast-message';
-import { Button, Text, XStack, YStack } from 'tamagui';
+import { Button, ScrollView, Text, XStack, YStack } from 'tamagui';
 
 interface ToinUserFormModalProps {
 	visible: boolean;
@@ -27,15 +28,18 @@ const ToinUserFormModal: React.FC<ToinUserFormModalProps> = ({
 	user,
 	mode,
 }) => {
+	console.log('ToinUserFormModal render, visible:', visible, 'mode:', mode);
+
 	const [firstname, setFirstname] = useState('');
 	const [lastname, setLastname] = useState('');
 	const [email, setEmail] = useState('');
 	const [phoneNumber, setPhoneNumber] = useState('');
 	const [department, setDepartment] = useState('');
 	const [position, setPosition] = useState('');
-	const [joinedDate, setJoinedDate] = useState('');
+	const [joinedDate, setJoinedDate] = useState(new Date());
 	const [showDepartmentPicker, setShowDepartmentPicker] = useState(false);
 	const [showPositionPicker, setShowPositionPicker] = useState(false);
+	const [showDatePicker, setShowDatePicker] = useState(false);
 
 	const createMutation = useCreateToinUser();
 	const updateMutation = useUpdateToinUser();
@@ -48,7 +52,7 @@ const ToinUserFormModal: React.FC<ToinUserFormModalProps> = ({
 			setPhoneNumber(user.phone_number);
 			setDepartment(user.department);
 			setPosition(user.position);
-			setJoinedDate(user.joinedDate.split('T')[0]);
+			setJoinedDate(new Date(user.joinedDate));
 		} else {
 			resetForm();
 		}
@@ -61,7 +65,7 @@ const ToinUserFormModal: React.FC<ToinUserFormModalProps> = ({
 		setPhoneNumber('');
 		setDepartment('');
 		setPosition('');
-		setJoinedDate(new Date().toISOString().split('T')[0]);
+		setJoinedDate(new Date());
 	};
 
 	const handleSubmit = async () => {
@@ -91,7 +95,7 @@ const ToinUserFormModal: React.FC<ToinUserFormModalProps> = ({
 					phone_number: phoneNumber,
 					department,
 					position,
-					joinedDate,
+					joinedDate: joinedDate.toISOString().split('T')[0],
 				};
 				await createMutation.mutateAsync(payload);
 				Toast.show({
@@ -107,7 +111,7 @@ const ToinUserFormModal: React.FC<ToinUserFormModalProps> = ({
 					phone_number: phoneNumber,
 					department,
 					position,
-					joinedDate,
+					joinedDate: joinedDate.toISOString().split('T')[0],
 				};
 				await updateMutation.mutateAsync({ id: user.id, payload });
 				Toast.show({
@@ -130,18 +134,45 @@ const ToinUserFormModal: React.FC<ToinUserFormModalProps> = ({
 	const departments = Object.values(Department);
 	const positions = Object.values(Position);
 
+	const handleDateChange = (event: any, selectedDate?: Date) => {
+		if (Platform.OS === 'android') {
+			setShowDatePicker(false);
+		}
+		if (selectedDate) {
+			setJoinedDate(selectedDate);
+			if (Platform.OS === 'ios') {
+				setShowDatePicker(false);
+			}
+		}
+	};
+
+	const formatDate = (date: Date): string => {
+		return date.toLocaleDateString('vi-VN', {
+			year: 'numeric',
+			month: '2-digit',
+			day: '2-digit',
+		});
+	};
+
 	return (
-		<Modal visible={visible} transparent animationType="slide">
+		<Modal
+			visible={visible}
+			transparent
+			animationType="slide"
+			statusBarTranslucent
+		>
 			<YStack
 				flex={1}
 				backgroundColor="rgba(0,0,0,0.5)"
 				justifyContent="flex-end"
+				zIndex={9999}
 			>
 				<YStack
 					backgroundColor={AppColors.surface}
 					borderTopLeftRadius="$6"
 					borderTopRightRadius="$6"
-					maxHeight="90%"
+					height="90%"
+					overflow="hidden"
 				>
 					{/* Header */}
 					<XStack
@@ -170,7 +201,7 @@ const ToinUserFormModal: React.FC<ToinUserFormModalProps> = ({
 					</XStack>
 
 					{/* Form */}
-					<ScrollView style={{ flex: 1 }}>
+					<ScrollView flex={1} showsVerticalScrollIndicator={false}>
 						<YStack padding="$4" gap="$4">
 							{/* First Name */}
 							<YStack gap="$2">
@@ -334,8 +365,12 @@ const ToinUserFormModal: React.FC<ToinUserFormModalProps> = ({
 										borderColor={AppColors.border}
 										borderRadius="$3"
 										maxHeight={200}
+										overflow="hidden"
 									>
-										<ScrollView>
+										<ScrollView
+											nestedScrollEnabled
+											showsVerticalScrollIndicator={false}
+										>
 											{departments.map((dept) => (
 												<TouchableOpacity
 													key={dept}
@@ -426,8 +461,12 @@ const ToinUserFormModal: React.FC<ToinUserFormModalProps> = ({
 										borderColor={AppColors.border}
 										borderRadius="$3"
 										maxHeight={200}
+										overflow="hidden"
 									>
-										<ScrollView>
+										<ScrollView
+											nestedScrollEnabled
+											showsVerticalScrollIndicator={false}
+										>
 											{positions.map((pos) => (
 												<TouchableOpacity
 													key={pos}
@@ -475,21 +514,41 @@ const ToinUserFormModal: React.FC<ToinUserFormModalProps> = ({
 									Ngày vào làm{' '}
 									<Text color={AppColors.danger}>*</Text>
 								</Text>
-								<TextInput
-									value={joinedDate}
-									onChangeText={setJoinedDate}
-									placeholder="YYYY-MM-DD"
-									placeholderTextColor={AppColors.textMuted}
+								<TouchableOpacity
+									onPress={() => setShowDatePicker(true)}
 									style={{
 										backgroundColor: AppColors.background,
 										borderWidth: 1,
 										borderColor: AppColors.border,
 										borderRadius: 8,
 										padding: 12,
-										fontSize: 15,
-										color: AppColors.text,
+										flexDirection: 'row',
+										justifyContent: 'space-between',
+										alignItems: 'center',
 									}}
-								/>
+								>
+									<Text color={AppColors.text}>
+										{formatDate(joinedDate)}
+									</Text>
+									<Ionicons
+										name="calendar-outline"
+										size={20}
+										color={AppColors.textMuted}
+									/>
+								</TouchableOpacity>
+								{showDatePicker && (
+									<DateTimePicker
+										value={joinedDate}
+										mode="date"
+										display={
+											Platform.OS === 'ios'
+												? 'spinner'
+												: 'default'
+										}
+										onChange={handleDateChange}
+										maximumDate={new Date()}
+									/>
+								)}
 							</YStack>
 						</YStack>
 					</ScrollView>

@@ -146,12 +146,23 @@ export default function DeviceDetailScreen() {
 					style: 'destructive',
 					onPress: async () => {
 						try {
-							await unassignMutation.mutateAsync(
-								currentAssignment.id
-							);
-							// Reset current assignment
-							refetchAssignments();
-							Alert.alert('✓ Thành công', 'Đã thu hồi thiết bị');
+							await unassignMutation.mutateAsync({
+								assignmentId: currentAssignment.id,
+								deviceId: deviceData?.id || '',
+							});
+							try {
+								// Reset current assignment
+								await refetchAssignments();
+								Alert.alert(
+									'✓ Thành công',
+									'Đã thu hồi thiết bị và cập nhật trạng thái'
+								);
+							} catch (error) {
+								Alert.alert(
+									'Lỗi',
+									'Không thể cập nhật trạng thái thiết bị'
+								);
+							}
 						} catch (error: any) {
 							Alert.alert(
 								'Lỗi',
@@ -281,6 +292,53 @@ export default function DeviceDetailScreen() {
 						elevation={2}
 					>
 						<YStack gap="$3">
+							{/* Status */}
+							<XStack gap="$3" alignItems="center">
+								<YStack
+									width={40}
+									height={40}
+									borderRadius="$8"
+									backgroundColor={
+										deviceData.status === 'AVAILABLE'
+											? AppColors.success + '20'
+											: deviceData.status === 'IN_USE'
+												? AppColors.info + '20'
+												: deviceData.status ===
+													  'MAINTENANCE'
+													? AppColors.warning + '20'
+													: AppColors.danger + '20'
+									}
+									alignItems="center"
+									justifyContent="center"
+								>
+									<Text fontSize={20}>
+										{deviceData.status === 'AVAILABLE'
+											? '✅'
+											: deviceData.status === 'IN_USE'
+												? '👤'
+												: deviceData.status ===
+													  'MAINTENANCE'
+													? '🔧'
+													: '🚫'}
+									</Text>
+								</YStack>
+								<YStack flex={1}>
+									<Text
+										fontSize={12}
+										color={AppColors.textMuted}
+									>
+										Trạng thái
+									</Text>
+									<XStack alignItems="center" gap="$2">
+										<StatusBadge
+											status={deviceData.status}
+										/>
+									</XStack>
+								</YStack>
+							</XStack>
+
+							<Separator borderColor={AppColors.border} />
+
 							{/* ID */}
 							<XStack gap="$3" alignItems="center">
 								<YStack

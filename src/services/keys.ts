@@ -33,6 +33,15 @@ export enum API_KEYS {
 	DEVICE_SOFTWARE_LINK = 'device_software_link',
 	ALL_DEVICE_SOFTWARE_LINKS = 'all_device_software_links',
 
+	// Software Management
+	ALL_SOFTWARE = 'all_software',
+	SOFTWARE_BY_ID = 'software_by_id',
+	SOFTWARE_PAGINATED = 'software_paginated',
+
+	// Credentials
+	ALL_CREDENTIALS = 'all_credentials',
+	CREDENTIAL_BY_ID = 'credential_by_id',
+
 	// QR Code
 	DEVICE_QR_CODE = 'device_qr_code',
 }

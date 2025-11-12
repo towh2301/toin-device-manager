@@ -690,8 +690,11 @@ const HomeScreen = () => {
 											}
 											borderRadius="$3"
 											fontWeight="600"
+											height={30}
 										>
-											Thêm thiết bị
+											<Text color={'white'}>
+												Thêm thiết bị
+											</Text>
 										</Button>
 										<Button
 											flex={1}
@@ -711,8 +714,11 @@ const HomeScreen = () => {
 											}
 											borderRadius="$3"
 											fontWeight="600"
+											height={30}
 										>
-											Thêm nhân viên
+											<Text color={'white'}>
+												Thêm nhân viên
+											</Text>
 										</Button>
 									</XStack>
 								</YStack>

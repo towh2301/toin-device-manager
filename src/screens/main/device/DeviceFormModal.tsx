@@ -9,6 +9,7 @@ import {
 	useUpdateDevice,
 } from '@/src/services/device';
 import { Ionicons } from '@expo/vector-icons';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import React, { useEffect, useState } from 'react';
 import {
 	Alert,
@@ -47,6 +48,7 @@ const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
 	const [showBrandPicker, setShowBrandPicker] = useState(false);
 	const [showTypePicker, setShowTypePicker] = useState(false);
 	const [showStatusPicker, setShowStatusPicker] = useState(false);
+	const [showDataePicker, setShowDatePicker] = useState(false);
 
 	// Mutations
 	const createMutation = useCreateDevice();
@@ -406,6 +408,7 @@ const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
 										Ngày mua
 									</Text>
 									<Card
+										onPress={() => setShowDatePicker(true)}
 										padding="$3"
 										backgroundColor={AppColors.surface}
 										borderWidth={1}
@@ -435,6 +438,25 @@ const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
 											/>
 										</XStack>
 									</Card>
+
+									{showDataePicker && (
+										<DateTimePicker
+											value={purchasedDate}
+											mode="date"
+											display="default"
+											onChange={(event, selectedDate) => {
+												setShowDatePicker(
+													Platform.OS === 'ios'
+												);
+												if (selectedDate) {
+													setPurchasedDate(
+														selectedDate
+													);
+												}
+											}}
+										/>
+									)}
+
 									<XStack gap="$2" justifyContent="flex-end">
 										<Button
 											size="$2"
@@ -449,8 +471,9 @@ const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
 													)
 												)
 											}
+											height={30}
 										>
-											◀ Ngày trước
+											<Text>◀ Ngày trước</Text>
 										</Button>
 										<Button
 											size="$2"
@@ -465,8 +488,9 @@ const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
 													)
 												)
 											}
+											height={30}
 										>
-											Ngày sau ▶
+											<Text>Ngày sau ▶</Text>
 										</Button>
 									</XStack>
 								</YStack>
@@ -486,10 +510,10 @@ const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
 								backgroundColor={AppColors.surface}
 								borderWidth={1}
 								borderColor={AppColors.border}
-								color={AppColors.text}
 								onPress={onClose}
+								height={30}
 							>
-								Hủy
+								<Text color={AppColors.text}>Hủy</Text>
 							</Button>
 							<Button
 								flex={1}
@@ -501,13 +525,16 @@ const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
 									createMutation.isPending ||
 									updateMutation.isPending
 								}
+								height={30}
 							>
-								{createMutation.isPending ||
-								updateMutation.isPending
-									? 'Đang xử lý...'
-									: mode === 'create'
-										? 'Thêm'
-										: 'Cập nhật'}
+								<Text color="white">
+									{createMutation.isPending ||
+									updateMutation.isPending
+										? 'Đang xử lý...'
+										: mode === 'create'
+											? 'Thêm'
+											: 'Cập nhật'}
+								</Text>
 							</Button>
 						</XStack>
 					</YStack>

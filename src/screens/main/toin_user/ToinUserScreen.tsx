@@ -157,9 +157,11 @@ const ToinUserScreen = () => {
 
 	// === Actions ===
 	const handleCreateUser = () => {
+		console.log('handleCreateUser called');
 		setFormMode('create');
 		setSelectedUser(null);
 		setShowFormModal(true);
+		console.log('showFormModal set to true');
 	};
 
 	const handleEditUser = (user: ToinUserResponse) => {
@@ -716,15 +718,7 @@ const ToinUserScreen = () => {
 				</YStack>
 
 				{/* User List */}
-				<ScrollView
-					style={{ paddingBottom: 130, paddingHorizontal: 16 }}
-					refreshControl={
-						<RefreshControl
-							refreshing={refreshing}
-							onRefresh={onRefresh}
-						/>
-					}
-				>
+				<YStack paddingBottom="$20" paddingHorizontal="$4" gap="$4">
 					{isLoading ? (
 						<LoadingIndicator data={''} />
 					) : filteredUsers.length === 0 ? (
@@ -739,22 +733,20 @@ const ToinUserScreen = () => {
 							</Text>
 						</YStack>
 					) : (
-						<YStack gap="$4">
-							{filteredUsers.map((user) =>
-								renderUserItem({ item: user })
-							)}
-						</YStack>
+						filteredUsers.map((user) =>
+							renderUserItem({ item: user })
+						)
 					)}
-				</ScrollView>
-
-				{/* Form Modal */}
-				<ToinUserFormModal
-					visible={showFormModal}
-					onClose={() => setShowFormModal(false)}
-					user={selectedUser}
-					mode={formMode}
-				/>
+				</YStack>
 			</ScrollView>
+
+			{/* Form Modal */}
+			<ToinUserFormModal
+				visible={showFormModal}
+				onClose={() => setShowFormModal(false)}
+				user={selectedUser}
+				mode={formMode}
+			/>
 		</YStack>
 	);
 };
