@@ -152,10 +152,10 @@ export default function SoftwareModal({
 				alignItems="center"
 				padding="$4"
 			>
-				<Card
+				<YStack
 					width="90%"
 					maxWidth={500}
-					maxHeight="80%"
+					height="80%"
 					backgroundColor={AppColors.surface}
 					borderRadius="$4"
 					padding="$4"
@@ -219,6 +219,7 @@ export default function SoftwareModal({
 								pressStyle={{
 									scale: 0.98,
 								}}
+								height={30}
 							>
 								<Text
 									fontSize={13}
@@ -245,6 +246,7 @@ export default function SoftwareModal({
 								pressStyle={{
 									scale: 0.98,
 								}}
+								height={30}
 							>
 								<Text
 									fontSize={13}
@@ -842,7 +844,7 @@ export default function SoftwareModal({
 							</>
 						)}
 					</YStack>
-				</Card>
+				</YStack>
 			</YStack>
 		</Modal>
 	);
