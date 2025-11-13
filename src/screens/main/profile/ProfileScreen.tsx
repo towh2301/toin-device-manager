@@ -73,7 +73,7 @@ const ProfileScreen = () => {
 					bordered={false}
 					padding="$5"
 					backgroundColor={AppColors.surface}
-					borderRadius="$10"
+					borderRadius="$4"
 					shadowColor={AppColors.shadowLight}
 					shadowRadius={8}
 					shadowOffset={{ width: 0, height: 3 }}
@@ -90,9 +90,10 @@ const ProfileScreen = () => {
 							shadowColor={AppColors.shadowMedium}
 							shadowRadius={12}
 							shadowOffset={{ width: 0, height: 4 }}
-							elevation={5}
+							alignItems="center"
+							justifyContent="center"
 						>
-							<Avatar circular size="$10">
+							<Avatar circular size="$14">
 								<Avatar.Image source={avatar} />
 								<Avatar.Fallback
 									backgroundColor={AppColors.primary}
@@ -105,7 +106,7 @@ const ProfileScreen = () => {
 								fontWeight="800"
 								color={AppColors.text}
 							>
-								{user.username}
+								{user.username.toUpperCase()}
 							</Text>
 							<XStack
 								paddingHorizontal="$3"
@@ -132,7 +133,7 @@ const ProfileScreen = () => {
 					padding="$4"
 					backgroundColor={AppColors.surface}
 					borderColor={AppColors.border}
-					borderRadius="$10"
+					borderRadius="$4"
 					shadowColor={AppColors.shadowLight}
 					shadowRadius={4}
 					shadowOffset={{ width: 0, height: 2 }}
@@ -258,7 +259,7 @@ const ProfileScreen = () => {
 					color="white"
 					icon={LogOut}
 					fontWeight="700"
-					borderRadius="$10"
+					borderRadius="$4"
 					marginTop="$2"
 					pressStyle={{
 						backgroundColor: AppColors.dangerDark,

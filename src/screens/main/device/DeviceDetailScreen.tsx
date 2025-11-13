@@ -12,6 +12,10 @@ import {
 	useUnlinkSoftware,
 } from '@/src/services/device';
 import { DeviceType } from '@/src/services/device/types';
+import {
+	useDeleteSoftware,
+	useUpdateSoftware,
+} from '@/src/services/software/useSoftwareMutations';
 import { Ionicons } from '@expo/vector-icons';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import {
@@ -27,8 +31,10 @@ import {
 } from '@tamagui/lucide-icons';
 import * as Clipboard from 'expo-clipboard';
 import React, { useState } from 'react';
-import { Alert, ScrollView, Share } from 'react-native';
+import { Alert, Pressable, ScrollView, Share } from 'react-native';
 import { Button, Card, Separator, Text, XStack, YStack } from 'tamagui';
+import PrintQRModal from './PrintQRModal';
+import SoftwareEditModal from './SoftwareEditModal';
 import SoftwareModal from './SoftwareModal';
 
 type DeviceDetailRouteProp = RouteProp<
@@ -42,6 +48,12 @@ export default function DeviceDetailScreen() {
 	const serialNumber = route.params?.serialNumber || '';
 	const [showAssignModal, setShowAssignModal] = useState(false);
 	const [showSoftwareModal, setShowSoftwareModal] = useState(false);
+	const [expandedSoftware, setExpandedSoftware] = useState<string[]>([]);
+	const [showPrintQRModal, setShowPrintQRModal] = useState(false);
+	const [editingSoftware, setEditingSoftware] = useState<{
+		id: string;
+		data: any;
+	} | null>(null);
 
 	const { deviceData, isLoading, isError, error } =
 		useGetDeviceBySerialNumber(serialNumber);
@@ -64,6 +76,8 @@ export default function DeviceDetailScreen() {
 	// Mutations
 	const unassignMutation = useUnassignDevice();
 	const unlinkSoftwareMutation = useUnlinkSoftware();
+	const updateSoftwareMutation = useUpdateSoftware();
+	const deleteSoftwareMutation = useDeleteSoftware();
 
 	if (isLoading) {
 		return <LoadingIndicator data={''} />;
@@ -210,6 +224,45 @@ export default function DeviceDetailScreen() {
 		);
 	};
 
+	const handleDeleteSoftware = (softwareId: string, softwareName: string) => {
+		Alert.alert(
+			'Xác nhận xóa',
+			`Bạn có chắc muốn xóa phần mềm "${softwareName}"? Hành động này không thể hoàn tác.`,
+			[
+				{ text: 'Hủy', style: 'cancel' },
+				{
+					text: 'Xóa',
+					style: 'destructive',
+					onPress: async () => {
+						try {
+							await deleteSoftwareMutation.mutateAsync(
+								softwareId
+							);
+							await refetchSoftware();
+							Alert.alert(
+								'✓ Thành công',
+								'Đã xóa phần mềm thành công'
+							);
+						} catch (error: any) {
+							Alert.alert(
+								'Lỗi',
+								error?.message || 'Không thể xóa phần mềm'
+							);
+						}
+					},
+				},
+			]
+		);
+	};
+
+	const toggleSoftwareExpand = (softwareId: string) => {
+		setExpandedSoftware((prev) =>
+			prev.includes(softwareId)
+				? prev.filter((id) => id !== softwareId)
+				: [...prev, softwareId]
+		);
+	};
+
 	return (
 		<>
 			<ScrollView
@@ -259,7 +312,7 @@ export default function DeviceDetailScreen() {
 					<Card
 						backgroundColor={AppColors.primary}
 						padding="$6"
-						borderRadius="$10"
+						borderRadius="$4"
 						bordered={false}
 						shadowColor={AppColors.shadowMedium}
 						shadowRadius={12}
@@ -270,7 +323,7 @@ export default function DeviceDetailScreen() {
 							<YStack
 								width={80}
 								height={80}
-								borderRadius="$10"
+								borderRadius="$4"
 								backgroundColor="white"
 								alignItems="center"
 								justifyContent="center"
@@ -320,7 +373,7 @@ export default function DeviceDetailScreen() {
 						padding="$4"
 						backgroundColor={AppColors.surface}
 						borderColor={AppColors.border}
-						borderRadius="$10"
+						borderRadius="$4"
 						shadowColor={AppColors.shadowLight}
 						shadowRadius={4}
 						shadowOffset={{ width: 0, height: 2 }}
@@ -332,7 +385,7 @@ export default function DeviceDetailScreen() {
 								<YStack
 									width={40}
 									height={40}
-									borderRadius="$8"
+									borderRadius="$4"
 									backgroundColor={
 										deviceData.status === 'AVAILABLE'
 											? AppColors.success + '20'
@@ -379,7 +432,7 @@ export default function DeviceDetailScreen() {
 								<YStack
 									width={40}
 									height={40}
-									borderRadius="$8"
+									borderRadius="$4"
 									backgroundColor={
 										AppColors.primaryLight + '20'
 									}
@@ -412,7 +465,7 @@ export default function DeviceDetailScreen() {
 								<YStack
 									width={40}
 									height={40}
-									borderRadius="$8"
+									borderRadius="$4"
 									backgroundColor={AppColors.info + '20'}
 									alignItems="center"
 									justifyContent="center"
@@ -443,7 +496,7 @@ export default function DeviceDetailScreen() {
 								<YStack
 									width={40}
 									height={40}
-									borderRadius="$8"
+									borderRadius="$4"
 									backgroundColor={AppColors.accent3 + '20'}
 									alignItems="center"
 									justifyContent="center"
@@ -474,7 +527,7 @@ export default function DeviceDetailScreen() {
 								<YStack
 									width={40}
 									height={40}
-									borderRadius="$8"
+									borderRadius="$4"
 									backgroundColor={AppColors.warning + '20'}
 									alignItems="center"
 									justifyContent="center"
@@ -515,7 +568,7 @@ export default function DeviceDetailScreen() {
 						padding="$4"
 						backgroundColor={AppColors.surface}
 						borderColor={AppColors.border}
-						borderRadius="$10"
+						borderRadius="$4"
 						shadowColor={AppColors.shadowLight}
 						shadowRadius={4}
 						shadowOffset={{ width: 0, height: 2 }}
@@ -570,7 +623,7 @@ export default function DeviceDetailScreen() {
 									<YStack
 										width={50}
 										height={50}
-										borderRadius="$10"
+										borderRadius="$4"
 										backgroundColor={
 											AppColors.primary + '20'
 										}
@@ -646,7 +699,7 @@ export default function DeviceDetailScreen() {
 						padding="$4"
 						backgroundColor={AppColors.surface}
 						borderColor={AppColors.border}
-						borderRadius="$10"
+						borderRadius="$4"
 						shadowColor={AppColors.shadowLight}
 						shadowRadius={4}
 						shadowOffset={{ width: 0, height: 2 }}
@@ -705,402 +758,235 @@ export default function DeviceDetailScreen() {
 							<Separator borderColor={AppColors.border} />
 
 							{softwareList.length > 0 ? (
-								<YStack gap="$3">
+								<YStack gap="$2">
 									{softwareList.map((deviceSoftware) => {
 										const software =
 											deviceSoftware.software;
+										const isExpanded =
+											expandedSoftware.includes(
+												deviceSoftware.softwareId
+											);
 
 										return (
 											<Card
-												key={deviceSoftware.id}
+												key={deviceSoftware.softwareId}
 												backgroundColor={
 													AppColors.background
 												}
 												borderWidth={1}
 												borderColor={AppColors.border}
-												borderRadius="$2"
+												borderRadius="$3"
 												padding="$3"
 											>
-												<YStack gap="$2">
-													{/* Software Header */}
-													<XStack
-														alignItems="center"
-														justifyContent="space-between"
+												<YStack
+													gap="$2"
+													key={
+														deviceSoftware.softwareId
+													}
+												>
+													{/* Software Header - Clickable to expand/collapse */}
+													<Pressable
+														onPress={() =>
+															toggleSoftwareExpand(
+																deviceSoftware.id
+															)
+														}
 													>
 														<XStack
 															alignItems="center"
-															gap="$2"
-															flex={1}
+															justifyContent="space-between"
 														>
-															<YStack
-																width={40}
-																height={40}
-																borderRadius="$2"
-																backgroundColor={
-																	AppColors.info +
-																	'20'
-																}
-																alignItems="center"
-																justifyContent="center"
-															>
-																<Text
-																	fontSize={
-																		18
-																	}
-																>
-																	💿
-																</Text>
-															</YStack>
-															<YStack flex={1}>
-																<Text
-																	fontSize={
-																		14
-																	}
-																	fontWeight="700"
-																	color={
-																		AppColors.text
-																	}
-																>
-																	{software?.name ||
-																		`Software #${deviceSoftware.softwareId}`}
-																</Text>
-																{software?.version && (
-																	<Text
-																		fontSize={
-																			11
-																		}
-																		color={
-																			AppColors.textMuted
-																		}
-																	>
-																		Version:{' '}
-																		{
-																			software.version
-																		}
-																	</Text>
-																)}
-															</YStack>
-														</XStack>
-														<Button
-															size="$2"
-															circular
-															chromeless
-															icon={
-																<Ionicons
-																	name="trash-outline"
-																	size={18}
-																	color={
-																		AppColors.danger
-																	}
-																/>
-															}
-															pressStyle={{
-																backgroundColor:
-																	AppColors.danger +
-																	'20',
-																scale: 0.95,
-															}}
-															onPress={() =>
-																handleUnlinkSoftware(
-																	deviceSoftware.softwareId,
-																	software?.name ||
-																		`Software #${deviceSoftware.softwareId}`
-																)
-															}
-														/>
-													</XStack>
-
-													<Separator
-														borderColor={
-															AppColors.border
-														}
-													/>
-
-													{/* Software Details */}
-													<YStack gap="$2">
-														{software?.licenseKey && (
 															<XStack
 																alignItems="center"
 																gap="$2"
+																flex={1}
 															>
-																<Text
-																	fontSize={
-																		11
+																<YStack
+																	width={40}
+																	height={40}
+																	borderRadius="$2"
+																	backgroundColor={
+																		AppColors.info +
+																		'20'
 																	}
-																	color={
-																		AppColors.textMuted
-																	}
-																	width={80}
-																>
-																	License Key:
-																</Text>
-																<XStack
 																	alignItems="center"
-																	gap="$2"
+																	justifyContent="center"
+																>
+																	<Text
+																		fontSize={
+																			18
+																		}
+																	>
+																		💿
+																	</Text>
+																</YStack>
+																<YStack
 																	flex={1}
 																>
 																	<Text
 																		fontSize={
-																			11
+																			14
 																		}
-																		fontWeight="600"
+																		fontWeight="700"
 																		color={
 																			AppColors.text
 																		}
-																		flex={1}
-																		numberOfLines={
-																			1
-																		}
 																	>
-																		{
-																			software.licenseKey
-																		}
+																		{software?.name ||
+																			`Software #${deviceSoftware.softwareId}`}
 																	</Text>
-																	<Button
-																		size="$1"
-																		circular
-																		chromeless
-																		icon={
-																			<Ionicons
-																				name="copy-outline"
-																				size={
-																					14
-																				}
-																				color={
-																					AppColors.info
-																				}
-																			/>
-																		}
-																		onPress={() =>
-																			Clipboard.setStringAsync(
-																				software.licenseKey ||
-																					''
-																			)
-																		}
-																	/>
-																</XStack>
+																	{software?.version && (
+																		<Text
+																			fontSize={
+																				11
+																			}
+																			color={
+																				AppColors.textMuted
+																			}
+																		>
+																			Version:{' '}
+																			{
+																				software.version
+																			}
+																		</Text>
+																	)}
+																</YStack>
 															</XStack>
-														)}
-
-														{software?.expiredDate && (
 															<XStack
 																alignItems="center"
-																gap="$2"
+																gap="$1"
 															>
-																<Text
-																	fontSize={
-																		11
+																<Ionicons
+																	name={
+																		isExpanded
+																			? 'chevron-up'
+																			: 'chevron-down'
 																	}
+																	size={20}
 																	color={
 																		AppColors.textMuted
 																	}
-																	width={80}
-																>
-																	Expiry Date:
-																</Text>
-																<Text
-																	fontSize={
-																		11
-																	}
-																	color={
-																		new Date(
-																			software.expiredDate
-																		) <
-																		new Date()
-																			? AppColors.danger
-																			: AppColors.text
-																	}
-																	fontWeight="600"
-																>
-																	{new Date(
-																		software.expiredDate
-																	).toLocaleDateString(
-																		'vi-VN'
-																	)}
-																</Text>
+																/>
 															</XStack>
-														)}
-													</YStack>
+														</XStack>
+													</Pressable>
 
-													{/* Account Info (if exists) */}
-													{software?.account && (
+													{/* Expanded Content */}
+													{isExpanded && (
 														<>
 															<Separator
 																borderColor={
 																	AppColors.border
 																}
+																marginVertical="$2"
 															/>
-															<YStack gap="$2">
-																<Text
-																	fontSize={
-																		12
-																	}
-																	fontWeight="700"
-																	color={
-																		AppColors.text
-																	}
-																>
-																	🔐 Account
-																	Login
-																</Text>
 
-																<XStack
-																	alignItems="center"
-																	gap="$2"
-																>
-																	<Text
-																		fontSize={
-																			11
-																		}
-																		color={
-																			AppColors.textMuted
-																		}
-																		width={
-																			80
-																		}
-																	>
-																		Username:
-																	</Text>
-																	<XStack
-																		alignItems="center"
-																		gap="$2"
-																		flex={1}
-																	>
-																		<Text
-																			fontSize={
-																				11
+															{/* Action Buttons */}
+															<XStack
+																gap="$2"
+																marginBottom="$2"
+															>
+																<Button
+																	flex={1}
+																	size="$2"
+																	backgroundColor={
+																		AppColors.warning
+																	}
+																	color="white"
+																	icon={
+																		<Ionicons
+																			name="create-outline"
+																			size={
+																				16
 																			}
-																			fontWeight="600"
-																			color={
-																				AppColors.text
-																			}
-																			flex={
-																				1
-																			}
-																		>
+																			color="white"
+																		/>
+																	}
+																	onPress={() =>
+																		setEditingSoftware(
 																			{
-																				software
-																					.account
-																					.username
+																				id:
+																					software?.id ||
+																					'',
+																				data: software,
 																			}
-																		</Text>
-																		<Button
-																			size="$1"
-																			circular
-																			chromeless
-																			icon={
-																				<Ionicons
-																					name="copy-outline"
-																					size={
-																						14
-																					}
-																					color={
-																						AppColors.info
-																					}
-																				/>
-																			}
-																			onPress={() =>
-																				Clipboard.setStringAsync(
-																					software
-																						.account
-																						?.username ||
-																						''
-																				)
-																			}
-																		/>
-																	</XStack>
-																</XStack>
-
-																<XStack
-																	alignItems="center"
-																	gap="$2"
+																		)
+																	}
+																	height={32}
 																>
-																	<Text
-																		fontSize={
-																			11
-																		}
-																		color={
-																			AppColors.textMuted
-																		}
-																		width={
-																			80
-																		}
-																	>
-																		Password:
-																	</Text>
+																	Sửa
+																</Button>
+																<Button
+																	flex={1}
+																	size="$2"
+																	backgroundColor={
+																		AppColors.danger
+																	}
+																	color="white"
+																	icon={
+																		<Ionicons
+																			name="trash-outline"
+																			size={
+																				16
+																			}
+																			color="white"
+																		/>
+																	}
+																	onPress={() =>
+																		handleDeleteSoftware(
+																			software?.id ||
+																				'',
+																			software?.name ||
+																				`Software #${deviceSoftware.softwareId}`
+																		)
+																	}
+																	height={32}
+																>
+																	Xóa
+																</Button>
+																<Button
+																	flex={1}
+																	size="$2"
+																	backgroundColor={
+																		AppColors.info
+																	}
+																	color="white"
+																	icon={
+																		<Ionicons
+																			name="unlink-outline"
+																			size={
+																				16
+																			}
+																			color="white"
+																		/>
+																	}
+																	onPress={() =>
+																		handleUnlinkSoftware(
+																			deviceSoftware.softwareId,
+																			software?.name ||
+																				`Software #${deviceSoftware.softwareId}`
+																		)
+																	}
+																	height={32}
+																>
+																	Gỡ
+																</Button>
+															</XStack>
+
+															<Separator
+																borderColor={
+																	AppColors.border
+																}
+															/>
+
+															{/* Software Details */}
+															<YStack
+																gap="$2"
+																marginTop="$2"
+															>
+																{software?.licenseKey && (
 																	<XStack
 																		alignItems="center"
-																		gap="$2"
-																		flex={1}
-																	>
-																		<Text
-																			fontSize={
-																				11
-																			}
-																			fontWeight="600"
-																			color={
-																				AppColors.text
-																			}
-																		>
-																			••••••••
-																		</Text>
-																		<Button
-																			size="$1"
-																			circular
-																			chromeless
-																			icon={
-																				<Ionicons
-																					name="eye-outline"
-																					size={
-																						14
-																					}
-																					color={
-																						AppColors.warning
-																					}
-																				/>
-																			}
-																			onPress={() =>
-																				Alert.alert(
-																					'Password',
-																					software
-																						.account
-																						?.password ||
-																						'N/A'
-																				)
-																			}
-																		/>
-																		<Button
-																			size="$1"
-																			circular
-																			chromeless
-																			icon={
-																				<Ionicons
-																					name="copy-outline"
-																					size={
-																						14
-																					}
-																					color={
-																						AppColors.info
-																					}
-																				/>
-																			}
-																			onPress={() =>
-																				Clipboard.setStringAsync(
-																					software
-																						.account
-																						?.password ||
-																						''
-																				)
-																			}
-																		/>
-																	</XStack>
-																</XStack>
-
-																{software
-																	.account
-																	.note && (
-																	<XStack
-																		alignItems="flex-start"
 																		gap="$2"
 																	>
 																		<Text
@@ -1111,54 +997,471 @@ export default function DeviceDetailScreen() {
 																				AppColors.textMuted
 																			}
 																			width={
-																				80
+																				90
 																			}
 																		>
-																			Note:
+																			License
+																			Key:
+																		</Text>
+																		<XStack
+																			alignItems="center"
+																			gap="$2"
+																			flex={
+																				1
+																			}
+																		>
+																			<Text
+																				fontSize={
+																					11
+																				}
+																				fontWeight="600"
+																				color={
+																					AppColors.text
+																				}
+																				flex={
+																					1
+																				}
+																				numberOfLines={
+																					1
+																				}
+																			>
+																				{
+																					software.licenseKey
+																				}
+																			</Text>
+																			<Button
+																				size="$1"
+																				circular
+																				chromeless
+																				icon={
+																					<Ionicons
+																						name="copy-outline"
+																						size={
+																							14
+																						}
+																						color={
+																							AppColors.info
+																						}
+																					/>
+																				}
+																				onPress={() =>
+																					Clipboard.setStringAsync(
+																						software.licenseKey ||
+																							''
+																					)
+																				}
+																			/>
+																		</XStack>
+																	</XStack>
+																)}
+
+																{software?.purchaseDate && (
+																	<XStack
+																		alignItems="center"
+																		gap="$2"
+																	>
+																		<Text
+																			fontSize={
+																				11
+																			}
+																			color={
+																				AppColors.textMuted
+																			}
+																			width={
+																				90
+																			}
+																		>
+																			Purchase
+																			Date:
 																		</Text>
 																		<Text
 																			fontSize={
 																				11
 																			}
 																			color={
-																				AppColors.textSecondary
+																				AppColors.text
 																			}
-																			flex={
-																				1
+																			fontWeight="600"
+																		>
+																			{new Date(
+																				software.purchaseDate
+																			).toLocaleDateString(
+																				'vi-VN'
+																			)}
+																		</Text>
+																	</XStack>
+																)}
+
+																{software?.expiredDate && (
+																	<XStack
+																		alignItems="center"
+																		gap="$2"
+																	>
+																		<Text
+																			fontSize={
+																				11
+																			}
+																			color={
+																				AppColors.textMuted
+																			}
+																			width={
+																				90
 																			}
 																		>
+																			Expiry
+																			Date:
+																		</Text>
+																		<Text
+																			fontSize={
+																				11
+																			}
+																			color={
+																				new Date(
+																					software.expiredDate
+																				) <
+																				new Date()
+																					? AppColors.danger
+																					: AppColors.success
+																			}
+																			fontWeight="600"
+																		>
+																			{new Date(
+																				software.expiredDate
+																			).toLocaleDateString(
+																				'vi-VN'
+																			)}
+																			{new Date(
+																				software.expiredDate
+																			) <
+																				new Date() &&
+																				' (Hết hạn)'}
+																		</Text>
+																	</XStack>
+																)}
+
+																{software?.plan && (
+																	<XStack
+																		alignItems="center"
+																		gap="$2"
+																	>
+																		<Text
+																			fontSize={
+																				11
+																			}
+																			color={
+																				AppColors.textMuted
+																			}
+																			width={
+																				90
+																			}
+																		>
+																			Plan:
+																		</Text>
+																		<Text
+																			fontSize={
+																				11
+																			}
+																			color={
+																				AppColors.text
+																			}
+																			fontWeight="600"
+																		>
 																			{
-																				software
-																					.account
-																					.note
+																				software.plan
 																			}
 																		</Text>
 																	</XStack>
 																)}
 															</YStack>
+
+															{/* Account Info (if exists) */}
+															{software?.account && (
+																<>
+																	<Separator
+																		borderColor={
+																			AppColors.border
+																		}
+																		marginVertical="$2"
+																	/>
+																	<YStack gap="$2">
+																		<Text
+																			fontSize={
+																				12
+																			}
+																			fontWeight="700"
+																			color={
+																				AppColors.text
+																			}
+																		>
+																			🔐
+																			Account
+																			Login
+																		</Text>
+
+																		<XStack
+																			alignItems="center"
+																			gap="$2"
+																		>
+																			<Text
+																				fontSize={
+																					11
+																				}
+																				color={
+																					AppColors.textMuted
+																				}
+																				width={
+																					90
+																				}
+																			>
+																				Username:
+																			</Text>
+																			<XStack
+																				alignItems="center"
+																				gap="$2"
+																				flex={
+																					1
+																				}
+																			>
+																				<Text
+																					fontSize={
+																						11
+																					}
+																					fontWeight="600"
+																					color={
+																						AppColors.text
+																					}
+																					flex={
+																						1
+																					}
+																				>
+																					{
+																						software
+																							.account
+																							.username
+																					}
+																				</Text>
+																				<Button
+																					size="$1"
+																					circular
+																					chromeless
+																					icon={
+																						<Ionicons
+																							name="copy-outline"
+																							size={
+																								14
+																							}
+																							color={
+																								AppColors.info
+																							}
+																						/>
+																					}
+																					onPress={() =>
+																						Clipboard.setStringAsync(
+																							software
+																								.account
+																								?.username ||
+																								''
+																						)
+																					}
+																				/>
+																			</XStack>
+																		</XStack>
+
+																		<XStack
+																			alignItems="center"
+																			gap="$2"
+																		>
+																			<Text
+																				fontSize={
+																					11
+																				}
+																				color={
+																					AppColors.textMuted
+																				}
+																				width={
+																					90
+																				}
+																			>
+																				Password:
+																			</Text>
+																			<XStack
+																				alignItems="center"
+																				gap="$2"
+																				flex={
+																					1
+																				}
+																			>
+																				<Text
+																					fontSize={
+																						11
+																					}
+																					fontWeight="600"
+																					color={
+																						AppColors.text
+																					}
+																				>
+																					••••••••
+																				</Text>
+																				<Button
+																					size="$1"
+																					circular
+																					chromeless
+																					icon={
+																						<Ionicons
+																							name="eye-outline"
+																							size={
+																								14
+																							}
+																							color={
+																								AppColors.warning
+																							}
+																						/>
+																					}
+																					onPress={() =>
+																						Alert.alert(
+																							'Password',
+																							software
+																								.account
+																								?.password ||
+																								'N/A'
+																						)
+																					}
+																				/>
+																				<Button
+																					size="$1"
+																					circular
+																					chromeless
+																					icon={
+																						<Ionicons
+																							name="copy-outline"
+																							size={
+																								14
+																							}
+																							color={
+																								AppColors.info
+																							}
+																						/>
+																					}
+																					onPress={() =>
+																						Clipboard.setStringAsync(
+																							software
+																								.account
+																								?.password ||
+																								''
+																						)
+																					}
+																				/>
+																			</XStack>
+																		</XStack>
+
+																		{software
+																			.account
+																			.relatedEmail && (
+																			<XStack
+																				alignItems="center"
+																				gap="$2"
+																			>
+																				<Text
+																					fontSize={
+																						11
+																					}
+																					color={
+																						AppColors.textMuted
+																					}
+																					width={
+																						90
+																					}
+																				>
+																					Email:
+																				</Text>
+																				<Text
+																					fontSize={
+																						11
+																					}
+																					color={
+																						AppColors.text
+																					}
+																					flex={
+																						1
+																					}
+																				>
+																					{
+																						software
+																							.account
+																							.relatedEmail
+																					}
+																				</Text>
+																			</XStack>
+																		)}
+
+																		{software
+																			.account
+																			.note && (
+																			<XStack
+																				alignItems="flex-start"
+																				gap="$2"
+																			>
+																				<Text
+																					fontSize={
+																						11
+																					}
+																					color={
+																						AppColors.textMuted
+																					}
+																					width={
+																						90
+																					}
+																				>
+																					Note:
+																				</Text>
+																				<Text
+																					fontSize={
+																						11
+																					}
+																					color={
+																						AppColors.textSecondary
+																					}
+																					flex={
+																						1
+																					}
+																				>
+																					{
+																						software
+																							.account
+																							.note
+																					}
+																				</Text>
+																			</XStack>
+																		)}
+																	</YStack>
+																</>
+															)}
+
+															{/* Install Date */}
+															<XStack
+																alignItems="center"
+																gap="$2"
+																marginTop="$2"
+															>
+																<Text
+																	fontSize={
+																		11
+																	}
+																	color={
+																		AppColors.textMuted
+																	}
+																>
+																	📅
+																	Installed:{' '}
+																	{new Date(
+																		deviceSoftware.installedDate
+																	).toLocaleDateString(
+																		'vi-VN'
+																	)}
+																</Text>
+															</XStack>
 														</>
 													)}
-
-													{/* Install Date */}
-													<XStack
-														alignItems="center"
-														gap="$2"
-														marginTop="$1"
-													>
-														<Text
-															fontSize={11}
-															color={
-																AppColors.textMuted
-															}
-														>
-															📅 Installed:{' '}
-															{new Date(
-																deviceSoftware.installedDate
-															).toLocaleDateString(
-																'vi-VN'
-															)}
-														</Text>
-													</XStack>
 												</YStack>
 											</Card>
 										);
@@ -1268,6 +1571,30 @@ export default function DeviceDetailScreen() {
 						>
 							Chia sẻ
 						</Button>
+						<Button
+							flex={1}
+							minWidth={150}
+							size="$4"
+							backgroundColor={AppColors.primary}
+							color="white"
+							icon={
+								<Ionicons
+									name="qr-code-outline"
+									size={20}
+									color="white"
+								/>
+							}
+							fontWeight="700"
+							borderRadius="$10"
+							pressStyle={{
+								backgroundColor: AppColors.primaryDark,
+								scale: 0.97,
+							}}
+							onPress={() => setShowPrintQRModal(true)}
+							height={'40'}
+						>
+							In QR
+						</Button>
 					</XStack>
 				</YStack>
 			</ScrollView>
@@ -1285,6 +1612,27 @@ export default function DeviceDetailScreen() {
 				deviceId={deviceData?.id || ''}
 				softwareList={softwareList}
 				onSuccess={refetchSoftware}
+			/>
+
+			{/* Software Edit Modal */}
+			{editingSoftware && (
+				<SoftwareEditModal
+					visible={!!editingSoftware}
+					onClose={() => setEditingSoftware(null)}
+					softwareId={editingSoftware.id}
+					softwareData={editingSoftware.data}
+					onSuccess={refetchSoftware}
+				/>
+			)}
+
+			{/* Print QR Code Modal */}
+			<PrintQRModal
+				visible={showPrintQRModal}
+				onClose={() => setShowPrintQRModal(false)}
+				deviceName={deviceData?.name || ''}
+				serialNumber={deviceData?.serialNumber || ''}
+				deviceType={deviceData?.type}
+				brand={deviceData?.brand}
 			/>
 		</>
 	);

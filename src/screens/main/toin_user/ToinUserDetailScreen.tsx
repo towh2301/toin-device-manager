@@ -16,6 +16,7 @@ import {
 	Briefcase,
 	Building2,
 	Calendar,
+	IdCard,
 	Mail,
 	Phone,
 } from '@tamagui/lucide-icons';
@@ -189,7 +190,7 @@ export default function ToinUserDetailScreen() {
 					<Card
 						backgroundColor={AppColors.primary}
 						padding="$6"
-						borderRadius="$10"
+						borderRadius="$4"
 						bordered={false}
 						shadowColor={AppColors.shadowMedium}
 						shadowRadius={12}
@@ -200,7 +201,7 @@ export default function ToinUserDetailScreen() {
 							<YStack
 								width={80}
 								height={80}
-								borderRadius="$10"
+								borderRadius="$4"
 								backgroundColor="white"
 								alignItems="center"
 								justifyContent="center"
@@ -258,13 +259,47 @@ export default function ToinUserDetailScreen() {
 						padding="$4"
 						backgroundColor={AppColors.surface}
 						borderColor={AppColors.border}
-						borderRadius="$10"
+						borderRadius="$4"
 						shadowColor={AppColors.shadowLight}
 						shadowRadius={4}
 						shadowOffset={{ width: 0, height: 2 }}
 						elevation={2}
 					>
 						<YStack gap="$3">
+							{/* Staff ID */}
+							<XStack gap="$3" alignItems="center">
+								<YStack
+									width={40}
+									height={40}
+									borderRadius="$8"
+									backgroundColor={AppColors.accent2 + '20'}
+									alignItems="center"
+									justifyContent="center"
+								>
+									<IdCard
+										size={20}
+										color={AppColors.accent2}
+									/>
+								</YStack>
+								<YStack flex={1}>
+									<Text
+										fontSize={12}
+										color={AppColors.textMuted}
+									>
+										Mã nhân viên
+									</Text>
+									<Text
+										fontSize={14}
+										fontWeight="600"
+										color={AppColors.text}
+									>
+										{toinUser.staffID}
+									</Text>
+								</YStack>
+							</XStack>
+
+							<Separator borderColor={AppColors.border} />
+
 							{/* Email */}
 							<XStack gap="$3" alignItems="center">
 								<YStack
@@ -447,7 +482,7 @@ export default function ToinUserDetailScreen() {
 						padding="$4"
 						backgroundColor={AppColors.surface}
 						borderColor={AppColors.border}
-						borderRadius="$10"
+						borderRadius="$4"
 						shadowColor={AppColors.shadowLight}
 						shadowRadius={4}
 						shadowOffset={{ width: 0, height: 2 }}
@@ -528,15 +563,13 @@ export default function ToinUserDetailScreen() {
 													fontWeight="600"
 													color={AppColors.text}
 												>
-													Device #
-													{assignment.device.id} -{' '}
 													{assignment.device.name}
 												</Text>
 												<Text
 													fontSize={11}
 													color={AppColors.textMuted}
 												>
-													Giao:{' '}
+													Ngày bàn giao:{' '}
 													{new Date(
 														assignment.assigned_date
 													).toLocaleDateString(
@@ -587,7 +620,7 @@ export default function ToinUserDetailScreen() {
 							padding="$4"
 							backgroundColor={AppColors.surface}
 							borderColor={AppColors.border}
-							borderRadius="$10"
+							borderRadius="$4"
 							shadowColor={AppColors.shadowLight}
 							shadowRadius={4}
 							shadowOffset={{ width: 0, height: 2 }}
@@ -698,7 +731,7 @@ export default function ToinUserDetailScreen() {
 						padding="$4"
 						backgroundColor={AppColors.accent1}
 						borderColor={AppColors.border}
-						borderRadius="$10"
+						borderRadius="$4"
 					>
 						<XStack
 							justifyContent="space-around"

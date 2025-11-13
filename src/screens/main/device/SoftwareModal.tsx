@@ -6,8 +6,9 @@ import {
 	useGetAllSoftware,
 } from '@/src/services/software';
 import { Ionicons } from '@expo/vector-icons';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import React, { useState } from 'react';
-import { Alert, Modal, TextInput } from 'react-native';
+import { Alert, Modal, Platform, Pressable, TextInput } from 'react-native';
 import {
 	Button,
 	Card,
@@ -35,7 +36,6 @@ export default function SoftwareModal({
 }: SoftwareModalProps) {
 	const [isCreatingNewSoftware, setIsCreatingNewSoftware] = useState(false);
 	const [newSoftwareName, setNewSoftwareName] = useState('');
-	const [newSoftwareVendor, setNewSoftwareVendor] = useState('');
 	const [newSoftwareVersion, setNewSoftwareVersion] = useState('');
 	const [newSoftwareLicenseKey, setNewSoftwareLicenseKey] = useState('');
 	const [showPassword, setShowPassword] = useState(false);
@@ -43,6 +43,15 @@ export default function SoftwareModal({
 	const [accountPassword, setAccountPassword] = useState('');
 	const [accountEmail, setAccountEmail] = useState('');
 	const [accountNote, setAccountNote] = useState('');
+	const [softwarePlan, setSoftwarePlan] = useState('');
+	const [softwarePurchaseDate, setSoftwarePurchaseDate] = useState<
+		Date | undefined
+	>(undefined);
+	const [softwareExpiryDate, setSoftwareExpiryDate] = useState<
+		Date | undefined
+	>(undefined);
+	const [showPurchaseDatePicker, setShowPurchaseDatePicker] = useState(false);
+	const [showExpiryDatePicker, setShowExpiryDatePicker] = useState(false);
 
 	const { softwareData: allSoftware = [] } = useGetAllSoftware();
 	const linkSoftwareMutation = useLinkSoftware();
@@ -51,7 +60,6 @@ export default function SoftwareModal({
 	const resetForm = () => {
 		setIsCreatingNewSoftware(false);
 		setNewSoftwareName('');
-		setNewSoftwareVendor('');
 		setNewSoftwareVersion('');
 		setNewSoftwareLicenseKey('');
 		setAccountUsername('');
@@ -59,6 +67,9 @@ export default function SoftwareModal({
 		setAccountEmail('');
 		setAccountNote('');
 		setShowPassword(false);
+		setSoftwarePlan('');
+		setSoftwarePurchaseDate(undefined);
+		setSoftwareExpiryDate(undefined);
 	};
 
 	const handleClose = () => {
@@ -97,6 +108,14 @@ export default function SoftwareModal({
 
 			if (newSoftwareLicenseKey.trim()) {
 				softwareData.licenseKey = newSoftwareLicenseKey.trim();
+			}
+
+			if (softwarePurchaseDate) {
+				softwareData.purchaseDate = softwarePurchaseDate.toISOString();
+			}
+
+			if (softwareExpiryDate) {
+				softwareData.expiredDate = softwareExpiryDate.toISOString();
 			}
 
 			if (accountUsername.trim()) {
@@ -431,6 +450,7 @@ export default function SoftwareModal({
 									borderColor={AppColors.border}
 									borderRadius="$3"
 									onPress={handleClose}
+									height={30}
 								>
 									<Text
 										fontSize={14}
@@ -508,6 +528,7 @@ export default function SoftwareModal({
 												</Card>
 											</YStack>
 
+											{/* Version */}
 											<YStack gap="$2">
 												<Text
 													fontSize={12}
@@ -547,6 +568,45 @@ export default function SoftwareModal({
 												</Card>
 											</YStack>
 
+											{/* Plan */}
+											<YStack gap="$2">
+												<Text
+													fontSize={12}
+													fontWeight="600"
+													color={
+														AppColors.textSecondary
+													}
+												>
+													Gói mua
+												</Text>
+												<Card
+													backgroundColor="white"
+													borderWidth={1}
+													borderColor={
+														AppColors.border
+													}
+													borderRadius="$2"
+													padding="$2.5"
+												>
+													<TextInput
+														placeholder="VD: 2024"
+														placeholderTextColor={
+															AppColors.textMuted
+														}
+														value={softwarePlan}
+														onChangeText={
+															setSoftwarePlan
+														}
+														style={{
+															fontSize: 13,
+															color: AppColors.text,
+															padding: 0,
+														}}
+													/>
+												</Card>
+											</YStack>
+
+											{/* License Key */}
 											<YStack gap="$2">
 												<Text
 													fontSize={12}
@@ -584,6 +644,156 @@ export default function SoftwareModal({
 														}}
 													/>
 												</Card>
+											</YStack>
+
+											{/* Purchase Date */}
+											<YStack gap="$2">
+												<Text
+													fontSize={12}
+													fontWeight="600"
+													color={
+														AppColors.textSecondary
+													}
+												>
+													📅 Ngày mua
+												</Text>
+												<Pressable
+													onPress={() =>
+														setShowPurchaseDatePicker(
+															true
+														)
+													}
+												>
+													<Card
+														backgroundColor="white"
+														borderWidth={1}
+														borderColor={
+															AppColors.border
+														}
+														borderRadius="$2"
+														padding="$2.5"
+													>
+														<Text
+															fontSize={13}
+															color={
+																softwarePurchaseDate
+																	? AppColors.text
+																	: AppColors.textMuted
+															}
+														>
+															{softwarePurchaseDate
+																? softwarePurchaseDate.toLocaleDateString(
+																		'vi-VN'
+																	)
+																: 'Chọn ngày mua'}
+														</Text>
+													</Card>
+												</Pressable>
+												{showPurchaseDatePicker && (
+													<DateTimePicker
+														value={
+															softwarePurchaseDate ||
+															new Date()
+														}
+														mode="date"
+														display={
+															Platform.OS ===
+															'ios'
+																? 'spinner'
+																: 'default'
+														}
+														locale="vi-VN"
+														onChange={(
+															event,
+															selectedDate
+														) => {
+															setShowPurchaseDatePicker(
+																Platform.OS ===
+																	'ios'
+															);
+															if (selectedDate) {
+																setSoftwarePurchaseDate(
+																	selectedDate
+																);
+															}
+														}}
+													/>
+												)}
+											</YStack>
+
+											{/* Expiry Date */}
+											<YStack gap="$2">
+												<Text
+													fontSize={12}
+													fontWeight="600"
+													color={
+														AppColors.textSecondary
+													}
+												>
+													📅 Ngày hết hạn
+												</Text>
+												<Pressable
+													onPress={() =>
+														setShowExpiryDatePicker(
+															true
+														)
+													}
+												>
+													<Card
+														backgroundColor="white"
+														borderWidth={1}
+														borderColor={
+															AppColors.border
+														}
+														borderRadius="$2"
+														padding="$2.5"
+													>
+														<Text
+															fontSize={13}
+															color={
+																softwareExpiryDate
+																	? AppColors.text
+																	: AppColors.textMuted
+															}
+														>
+															{softwareExpiryDate
+																? softwareExpiryDate.toLocaleDateString(
+																		'vi-VN'
+																	)
+																: 'Chọn ngày hết hạn'}
+														</Text>
+													</Card>
+												</Pressable>
+												{showExpiryDatePicker && (
+													<DateTimePicker
+														value={
+															softwareExpiryDate ||
+															new Date()
+														}
+														mode="date"
+														display={
+															Platform.OS ===
+															'ios'
+																? 'spinner'
+																: 'default'
+														}
+														locale="vi-VN"
+														onChange={(
+															event,
+															selectedDate
+														) => {
+															setShowExpiryDatePicker(
+																Platform.OS ===
+																	'ios'
+															);
+															if (selectedDate) {
+																setSoftwareExpiryDate(
+																	selectedDate
+																);
+															}
+														}}
+													/>
+												)}
 											</YStack>
 										</YStack>
 
@@ -804,11 +1014,14 @@ export default function SoftwareModal({
 								<XStack gap="$2" marginTop="$2">
 									<Button
 										flex={1}
-										backgroundColor={AppColors.background}
+										backgroundColor={
+											AppColors.dangerDark + 30
+										}
 										borderWidth={1}
 										borderColor={AppColors.border}
 										borderRadius="$3"
 										onPress={handleClose}
+										height={30}
 									>
 										<Text
 											fontSize={14}
@@ -831,6 +1044,7 @@ export default function SoftwareModal({
 										pressStyle={{
 											scale: 0.98,
 										}}
+										height={30}
 									>
 										<Text
 											fontSize={14}

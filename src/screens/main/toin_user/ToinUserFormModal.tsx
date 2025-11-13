@@ -6,6 +6,7 @@ import {
 	ToinUserResponse,
 	ToinUserUpdatePayload,
 	useCreateToinUser,
+	useGetAllToinUsers,
 	useUpdateToinUser,
 } from '@/src/services/toin-user';
 import { Ionicons } from '@expo/vector-icons';
@@ -30,6 +31,7 @@ const ToinUserFormModal: React.FC<ToinUserFormModalProps> = ({
 }) => {
 	console.log('ToinUserFormModal render, visible:', visible, 'mode:', mode);
 
+	const [staffID, setStaffID] = useState('');
 	const [firstname, setFirstname] = useState('');
 	const [lastname, setLastname] = useState('');
 	const [email, setEmail] = useState('');
@@ -44,8 +46,11 @@ const ToinUserFormModal: React.FC<ToinUserFormModalProps> = ({
 	const createMutation = useCreateToinUser();
 	const updateMutation = useUpdateToinUser();
 
+	const { onGetAllToinUsers } = useGetAllToinUsers();
+
 	useEffect(() => {
 		if (mode === 'edit' && user) {
+			setStaffID(user.staffID);
 			setFirstname(user.firstname);
 			setLastname(user.lastname);
 			setEmail(user.email);
@@ -59,6 +64,7 @@ const ToinUserFormModal: React.FC<ToinUserFormModalProps> = ({
 	}, [mode, user, visible]);
 
 	const resetForm = () => {
+		setStaffID('');
 		setFirstname('');
 		setLastname('');
 		setEmail('');
@@ -70,6 +76,7 @@ const ToinUserFormModal: React.FC<ToinUserFormModalProps> = ({
 
 	const handleSubmit = async () => {
 		if (
+			!staffID ||
 			!firstname ||
 			!lastname ||
 			!email ||
@@ -89,6 +96,7 @@ const ToinUserFormModal: React.FC<ToinUserFormModalProps> = ({
 		try {
 			if (mode === 'create') {
 				const payload: ToinUserCreatePayload = {
+					staffID,
 					firstname,
 					lastname,
 					email,
@@ -105,6 +113,7 @@ const ToinUserFormModal: React.FC<ToinUserFormModalProps> = ({
 				});
 			} else if (user) {
 				const payload: ToinUserUpdatePayload = {
+					staffID,
 					firstname,
 					lastname,
 					email,
@@ -113,11 +122,16 @@ const ToinUserFormModal: React.FC<ToinUserFormModalProps> = ({
 					position,
 					joinedDate: joinedDate.toISOString().split('T')[0],
 				};
+
 				await updateMutation.mutateAsync({ id: user.id, payload });
+				await onGetAllToinUsers();
+
 				Toast.show({
 					type: 'success',
 					text1: 'Thành công',
-					text2: 'Cập nhật người dùng thành công',
+					text2:
+						'Cập nhật người dùng thành công với ID: ' +
+						user.staffID,
 				});
 			}
 			onClose();
@@ -203,6 +217,33 @@ const ToinUserFormModal: React.FC<ToinUserFormModalProps> = ({
 					{/* Form */}
 					<ScrollView flex={1} showsVerticalScrollIndicator={false}>
 						<YStack padding="$4" gap="$4">
+							{/* Staff ID */}
+							<YStack gap="$2">
+								<Text
+									fontSize={14}
+									fontWeight="600"
+									color={AppColors.text}
+								>
+									Mã nhân viên{' '}
+									<Text color={AppColors.danger}>*</Text>
+								</Text>
+								<TextInput
+									value={staffID}
+									onChangeText={setStaffID}
+									placeholder="Nhập mã nhân viên"
+									placeholderTextColor={AppColors.textMuted}
+									style={{
+										backgroundColor: AppColors.background,
+										borderWidth: 1,
+										borderColor: AppColors.border,
+										borderRadius: 8,
+										padding: 12,
+										fontSize: 15,
+										color: AppColors.text,
+									}}
+								/>
+							</YStack>
+
 							{/* First Name */}
 							<YStack gap="$2">
 								<Text

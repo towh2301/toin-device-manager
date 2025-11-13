@@ -50,6 +50,7 @@ export enum Position {
  */
 export interface ToinUserResponse {
 	id: string;
+	staffID: string;
 	firstname: string;
 	lastname: string;
 	fullname?: string;
@@ -69,6 +70,7 @@ export interface ToinUserResponse {
  * POST /toin-user/create
  */
 export interface ToinUserCreatePayload {
+	staffID: string;
 	firstname: string;
 	lastname: string;
 	email: string;
@@ -84,6 +86,7 @@ export interface ToinUserCreatePayload {
  * All fields are optional
  */
 export interface ToinUserUpdatePayload {
+	staffID?: string;
 	firstname?: string;
 	lastname?: string;
 	email?: string;
