@@ -50,60 +50,79 @@ export default function PrintQRModal({
 			});
 
 			// Generate simple HTML with just the QR image
+			// Generate simple HTML with just the QR image
 			const html = `
 <!DOCTYPE html>
 <html>
 <head>
-	<meta charset="utf-8" />
-	<style>
-		html, body {
-			margin: 0;
-			padding: 0;
-			width: fit-content;
-			height: fit-content;
-			background: white;
-			display: flex;
-			justify-content: center;
-			align-items: center;
-		}
+    <meta charset="utf-8" />
+    <title>QR Code</title>
+    <style>
+        /* CSS cho hiển thị web (không quan trọng lắm) */
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #eee;
+        }
 
-		img {
-			display: block;
-			margin: 0;
-			padding: 0;
-			image-rendering: pixelated;
-			image-rendering: crisp-edges;
-			object-fit: contain;
-		}
+        img {
+            width: 300px; /* Kích thước xem trước trên web */
+            height: 300px;
+            object-fit: contain;
+            background: white;
+            border: 1px solid #ccc;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+        }
 
-		/* Khi in ra, đảm bảo không có viền nào */
-		@media print {
-			@page {
-				margin: 0;
-				size: auto;
-			}
-			html, body {
-				margin: 0 !important;
-				padding: 0 !important;
-				background: white !important;
-			}
-			img {
-				margin: 0 !important;
-				padding: 0 !important;
-				width: 100vw !important;
-				height: 100vh !important;
-				object-fit: contain;
-				print-color-adjust: exact;
-				-webkit-print-color-adjust: exact;
-			}
-		}
-	</style>
+        /* ----- QUAN TRỌNG: CSS KHI IN ----- */
+        @media print {
+            /* Định nghĩa kích thước trang in là 3.5cm x 3.5cm */
+            @page {
+                size: 3.5cm 3.5cm; /* Bạn có thể đổi 3.5cm thành 3cm, 4cm, v.v. */
+                margin: 0 !important; /* Bỏ mọi lề trang */
+            }
+
+            /* Bắt buộc body và html phải có kích thước đúng bằng trang */
+            html, body {
+                width: 3.5cm;
+                height: 3.5cm;
+                margin: 0 !important;
+                padding: 0 !important;
+                background: white !important; /* Nền trắng */
+                display: block; /* Bỏ flex, chỉ cần block là đủ */
+            }
+
+            /*
+             * Yêu cầu ảnh lấp đầy 100% kích thước trang (3.5cm)
+             * (Bao gồm cả 'padding: 20' bạn đã set trong ViewShot)
+             */
+            img {
+                width: 100% !important;
+                height: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                border: none !important; /* Bỏ viền khi in */
+                object-fit: contain;
+                display: block;
+
+                /* Đảm bảo in màu chính xác */
+                print-color-adjust: exact;
+                -webkit-print-color-adjust: exact;
+            }
+        }
+    </style>
 </head>
 <body>
-	<img src="data:image/png;base64,${base64}" alt="QR Code" />
+    <img src="data:image/png;base64,${base64}" alt="QR Code" />
 </body>
 </html>
-			`;
+        `;
 
 			return html;
 		} catch (error) {
