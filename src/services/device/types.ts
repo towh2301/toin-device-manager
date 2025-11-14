@@ -1,3 +1,4 @@
+import { SoftwareResponse } from '../software';
 import { ToinUserResponse } from '../toin-user';
 
 interface DeviceResponse {
@@ -67,22 +68,7 @@ interface DeviceSoftwareResponse {
 	createdAt: string;
 	updatedAt: string;
 	// Populated software details (when API includes them)
-	software?: {
-		id: string;
-		name: string;
-		version?: string;
-		plan?: string;
-		licenseKey?: string;
-		purchaseDate?: string;
-		expiredDate?: string;
-		account?: {
-			_id: string;
-			username: string;
-			password: string;
-			relatedEmail?: string;
-			note?: string;
-		};
-	};
+	software?: SoftwareResponse;
 }
 
 // QR Code Response
