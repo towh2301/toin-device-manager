@@ -93,6 +93,8 @@ export default function DeviceDetailScreen() {
 									deviceId: deviceData.id,
 									softwareId,
 								});
+
+								await refetchSoftware();
 								Alert.alert(
 									'✓ Thành công',
 									'Đã gỡ phần mềm khỏi thiết bị'

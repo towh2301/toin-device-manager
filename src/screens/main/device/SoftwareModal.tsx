@@ -1,5 +1,5 @@
 import { AppColors } from '@/src/common/app-color';
-import { useLinkSoftware } from '@/src/services';
+import { useLinkSoftware, useUnlinkSoftware } from '@/src/services';
 import {
 	SoftwareResponse,
 	useCreateSoftware,
@@ -56,6 +56,7 @@ export default function SoftwareModal({
 	const { softwareData: allSoftware = [] } = useGetAllSoftware();
 	const linkSoftwareMutation = useLinkSoftware();
 	const createSoftwareMutation = useCreateSoftware();
+	const unlinkSoftwareMutation = useUnlinkSoftware();
 
 	const resetForm = () => {
 		setIsCreatingNewSoftware(false);
@@ -75,6 +76,23 @@ export default function SoftwareModal({
 	const handleClose = () => {
 		resetForm();
 		onClose();
+	};
+
+	const handleUnlinkSoftware = async ({
+		deviceId,
+		softwareId,
+	}: {
+		deviceId: string;
+		softwareId: string;
+	}) => {
+		try {
+			await unlinkSoftwareMutation.mutateAsync({ deviceId, softwareId });
+			Alert.alert('✓ Thành công', 'Đã gỡ phần mềm khỏi thiết bị');
+			onSuccess();
+			handleClose();
+		} catch (error: any) {
+			Alert.alert('Lỗi', error?.message || 'Không thể gỡ phần mềm');
+		}
 	};
 
 	const handleLinkSoftware = async (softwareId: string) => {
@@ -340,6 +358,9 @@ export default function SoftwareModal({
 															<XStack
 																gap="$3"
 																alignItems="center"
+																key={
+																	software.id
+																}
 															>
 																<YStack
 																	width={40}
