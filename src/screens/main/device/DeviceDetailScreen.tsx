@@ -4,6 +4,7 @@ import LoadingIndicator from '@/src/components/LoadingIndicator';
 import { StatusBadge } from '@/src/components/StatusBadge';
 import { TypeBadge } from '@/src/components/TypeBadge';
 import { DeviceStackParamList, NavigationRoutes } from '@/src/navigation/types';
+import { useGetAllCredentials } from '@/src/services/credential';
 import {
 	useGetDeviceAssignments,
 	useGetDeviceBySerialNumber,
@@ -64,6 +65,7 @@ export default function DeviceDetailScreen() {
 		useGetDeviceAssignments(deviceData?.id || '');
 	const { data: softwareResponse, refetch: refetchSoftware } =
 		useGetDeviceSoftware(deviceData?.id || '');
+	const { credentialData, onGetAllCredentials } = useGetAllCredentials();
 
 	// Mutations - MUST be called before any conditional returns
 	const unassignMutation = useUnassignDevice();
@@ -72,6 +74,7 @@ export default function DeviceDetailScreen() {
 	// Extract data from API responses
 	const assignments = assignmentsResponse?.data || [];
 	const softwareList = softwareResponse?.data || [];
+	const credentialsList = credentialData || [];
 
 	// Find current assignment (returned_date is null/undefined)
 	const currentAssignment = assignments.find(
@@ -805,7 +808,7 @@ export default function DeviceDetailScreen() {
 						padding="$4"
 						backgroundColor={AppColors.surface}
 						borderColor={AppColors.border}
-						borderRadius="$10"
+						borderRadius="$4"
 						shadowColor={AppColors.shadowLight}
 						shadowRadius={4}
 						shadowOffset={{ width: 0, height: 2 }}
@@ -813,7 +816,11 @@ export default function DeviceDetailScreen() {
 					>
 						<YStack gap="$3">
 							{/* Header */}
-							<XStack alignItems="center" gap="$2">
+							<XStack
+								alignItems="center"
+								gap="$2"
+								justifyContent="space-around"
+							>
 								<Key size={20} color={AppColors.warning} />
 								<Text
 									fontSize={16}
@@ -821,6 +828,16 @@ export default function DeviceDetailScreen() {
 									color={AppColors.text}
 								>
 									Thông tin đăng nhập
+								</Text>
+								<Text
+									fontSize={12}
+									color={AppColors.textMuted}
+									backgroundColor={AppColors.info + '20'}
+									paddingHorizontal="$2"
+									paddingVertical="$1"
+									borderRadius="$2"
+								>
+									{credentialsList.length} mục
 								</Text>
 							</XStack>
 
