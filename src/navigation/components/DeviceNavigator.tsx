@@ -1,6 +1,6 @@
 import DeviceDetailScreen from '@/src/screens/main/device/DeviceDetailScreen';
 import DeviceScreen from '@/src/screens/main/device/DeviceScreen';
-import QrScanScreen from '@/src/screens/main/device/ScanQRDevice';
+import QrScanScreen from '@/src/screens/main/device/printer/ScanQRDevice';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
 import { DeviceStackParamList, NavigationRoutes } from '../types';

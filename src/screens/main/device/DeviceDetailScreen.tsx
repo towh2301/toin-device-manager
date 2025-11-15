@@ -13,10 +13,6 @@ import {
 } from '@/src/services/device';
 import { DeviceType } from '@/src/services/device/types';
 import { SoftwareResponse } from '@/src/services/software';
-import {
-	useDeleteSoftware,
-	useUpdateSoftware,
-} from '@/src/services/software/useSoftwareMutations';
 import { Ionicons } from '@expo/vector-icons';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import {
@@ -31,13 +27,13 @@ import {
 	User,
 } from '@tamagui/lucide-icons';
 import * as Clipboard from 'expo-clipboard';
-import React, { useCallback, useState } from 'react';
+import React, { useState } from 'react';
 import { Alert, ScrollView, Share } from 'react-native';
 import { Button, Card, Separator, Text, XStack, YStack } from 'tamagui';
-import PrintQRModal from './PrintQRModal';
-import SoftwareCard from './SoftwareCard';
-import SoftwareEditModal from './SoftwareEditModal';
-import SoftwareModal from './SoftwareModal';
+import PrintQRModal from './printer/PrintQRModal';
+import SoftwareCard from './software/SoftwareCard';
+import SoftwareEditModal from './software/SoftwareEditModal';
+import SoftwareModal from './software/SoftwareModal';
 
 type DeviceDetailRouteProp = RouteProp<
 	DeviceStackParamList,
@@ -72,80 +68,6 @@ export default function DeviceDetailScreen() {
 	// Mutations - MUST be called before any conditional returns
 	const unassignMutation = useUnassignDevice();
 	const unlinkSoftwareMutation = useUnlinkSoftware();
-	const updateSoftwareMutation = useUpdateSoftware();
-	const deleteSoftwareMutation = useDeleteSoftware();
-
-	// Callbacks - MUST be called before any conditional returns
-	const handleUnlinkSoftware = useCallback(
-		(softwareId: string, softwareName: string) => {
-			Alert.alert(
-				'Xác nhận gỡ',
-				`Bạn có chắc muốn gỡ phần mềm "${softwareName}" khỏi thiết bị này?`,
-				[
-					{ text: 'Hủy', style: 'cancel' },
-					{
-						text: 'Gỡ',
-						style: 'destructive',
-						onPress: async () => {
-							if (!deviceData?.id) return;
-							try {
-								await unlinkSoftwareMutation.mutateAsync({
-									deviceId: deviceData.id,
-									softwareId,
-								});
-
-								await refetchSoftware();
-								Alert.alert(
-									'✓ Thành công',
-									'Đã gỡ phần mềm khỏi thiết bị'
-								);
-							} catch (error: any) {
-								Alert.alert(
-									'Lỗi',
-									error?.message || 'Không thể gỡ phần mềm'
-								);
-							}
-						},
-					},
-				]
-			);
-		},
-		[deviceData?.id, unlinkSoftwareMutation]
-	);
-
-	const handleDeleteSoftware = useCallback(
-		(softwareId: string, softwareName: string) => {
-			Alert.alert(
-				'Xác nhận xóa',
-				`Bạn có chắc muốn xóa phần mềm "${softwareName}"? Hành động này không thể hoàn tác.`,
-				[
-					{ text: 'Hủy', style: 'cancel' },
-					{
-						text: 'Xóa',
-						style: 'destructive',
-						onPress: async () => {
-							try {
-								await deleteSoftwareMutation.mutateAsync(
-									softwareId
-								);
-								await refetchSoftware();
-								Alert.alert(
-									'✓ Thành công',
-									'Đã xóa phần mềm thành công'
-								);
-							} catch (error: any) {
-								Alert.alert(
-									'Lỗi',
-									error?.message || 'Không thể xóa phần mềm'
-								);
-							}
-						},
-					},
-				]
-			);
-		},
-		[deleteSoftwareMutation, refetchSoftware]
-	);
 
 	// Extract data from API responses
 	const assignments = assignmentsResponse?.data || [];
@@ -211,6 +133,57 @@ export default function DeviceDetailScreen() {
 			</YStack>
 		);
 	}
+
+	// Callbacks - MUST be called before any conditional returns
+	const handleUnlinkSoftware = async (
+		softwareIdParam: string,
+		softwareName: string
+	) => {
+		Alert.alert(
+			'Xác nhận gỡ',
+			`Bạn có chắc muốn gỡ phần mềm "${softwareName}" khỏi thiết bị này?`,
+			[
+				{ text: 'Hủy', style: 'cancel' },
+				{
+					text: 'Gỡ',
+					style: 'destructive',
+					onPress: async () => {
+						if (!deviceData?.id) {
+							Alert.alert('Lỗi', 'Không tìm thấy Device ID');
+							return;
+						}
+						if (!softwareIdParam) {
+							Alert.alert('Lỗi', 'Không tìm thấy Software ID');
+							return;
+						}
+						try {
+							console.log('🔄 [Unlink] Sending request:', {
+								deviceId: deviceData?.id,
+								softwareId: softwareIdParam,
+							});
+
+							await unlinkSoftwareMutation.mutateAsync({
+								deviceId: deviceData?.id,
+								softwareId: softwareIdParam,
+							});
+
+							await refetchSoftware();
+							Alert.alert(
+								'✓ Thành công',
+								'Đã gỡ phần mềm khỏi thiết bị'
+							);
+						} catch (error: any) {
+							console.error('❌ [Unlink] Error:', error);
+							Alert.alert(
+								'Lỗi',
+								error?.message || 'Không thể gỡ phần mềm'
+							);
+						}
+					},
+				},
+			]
+		);
+	};
 
 	const copySN = async () => {
 		await Clipboard.setStringAsync(deviceData.serialNumber);
@@ -340,7 +313,6 @@ export default function DeviceDetailScreen() {
 					>
 						<YStack alignItems="center" gap="$3">
 							<YStack
-								key="device-icon"
 								width={80}
 								height={80}
 								borderRadius="$4"
@@ -377,11 +349,7 @@ export default function DeviceDetailScreen() {
 																		: '📦'}
 								</Text>
 							</YStack>
-							<XStack
-								key="device-badges"
-								gap="$2"
-								alignItems="center"
-							>
+							<XStack gap="$2" alignItems="center">
 								<StatusBadge status={deviceData.status} />
 								<TypeBadge
 									type={deviceData.type}
@@ -405,7 +373,7 @@ export default function DeviceDetailScreen() {
 					>
 						<YStack gap="$3">
 							{/* Status */}
-							<XStack key="status" gap="$3" alignItems="center">
+							<XStack gap="$3" alignItems="center">
 								<YStack
 									width={40}
 									height={40}
@@ -449,13 +417,10 @@ export default function DeviceDetailScreen() {
 								</YStack>
 							</XStack>
 
-							<Separator
-								key="sep-status"
-								borderColor={AppColors.border}
-							/>
+							<Separator borderColor={AppColors.border} />
 
 							{/* ID */}
-							<XStack key="id" gap="$3" alignItems="center">
+							<XStack gap="$3" alignItems="center">
 								<YStack
 									width={40}
 									height={40}
@@ -485,13 +450,10 @@ export default function DeviceDetailScreen() {
 								</YStack>
 							</XStack>
 
-							<Separator
-								key="sep-id"
-								borderColor={AppColors.border}
-							/>
+							<Separator borderColor={AppColors.border} />
 
 							{/* Serial Number */}
-							<XStack key="serial" gap="$3" alignItems="center">
+							<XStack gap="$3" alignItems="center">
 								<YStack
 									width={40}
 									height={40}
@@ -519,13 +481,10 @@ export default function DeviceDetailScreen() {
 								</YStack>
 							</XStack>
 
-							<Separator
-								key="sep-serial"
-								borderColor={AppColors.border}
-							/>
+							<Separator borderColor={AppColors.border} />
 
 							{/* Brand */}
-							<XStack key="brand" gap="$3" alignItems="center">
+							<XStack gap="$3" alignItems="center">
 								<YStack
 									width={40}
 									height={40}
@@ -553,17 +512,10 @@ export default function DeviceDetailScreen() {
 								</YStack>
 							</XStack>
 
-							<Separator
-								key="sep-brand"
-								borderColor={AppColors.border}
-							/>
+							<Separator borderColor={AppColors.border} />
 
 							{/* Purchase Date */}
-							<XStack
-								key="purchase-date"
-								gap="$3"
-								alignItems="center"
-							>
+							<XStack gap="$3" alignItems="center">
 								<YStack
 									width={40}
 									height={40}
@@ -617,7 +569,6 @@ export default function DeviceDetailScreen() {
 						<YStack gap="$3">
 							{/* Header with Action Button */}
 							<XStack
-								key="user-header"
 								alignItems="center"
 								justifyContent="space-between"
 							>
@@ -657,17 +608,10 @@ export default function DeviceDetailScreen() {
 								)}
 							</XStack>
 
-							<Separator
-								key="sep-user"
-								borderColor={AppColors.border}
-							/>
+							<Separator borderColor={AppColors.border} />
 
 							{currentAssignment ? (
-								<XStack
-									key="user-info"
-									gap="$3"
-									alignItems="center"
-								>
+								<XStack gap="$3" alignItems="center">
 									<YStack
 										width={50}
 										height={50}
@@ -756,7 +700,6 @@ export default function DeviceDetailScreen() {
 						<YStack gap="$3">
 							{/* Header */}
 							<XStack
-								key="software-header"
 								alignItems="center"
 								justifyContent="space-between"
 							>
@@ -805,34 +748,31 @@ export default function DeviceDetailScreen() {
 							</XStack>
 
 							<Separator
-								key="sep-software"
 								borderColor={AppColors.border}
+								marginVertical="$2"
 							/>
 
 							{softwareList.length > 0 ? (
-								<YStack gap="$2" key="software-list">
+								<YStack gap="$2">
 									{softwareList.map((deviceSoftware) => {
 										const software =
-											deviceSoftware.software;
-										const isExpanded =
-											expandedSoftware.includes(
-												deviceSoftware.softwareId
-											);
+											typeof deviceSoftware.software ===
+											'object'
+												? deviceSoftware.software
+												: undefined;
 
 										return (
 											<SoftwareCard
-												key={deviceSoftware.softwareId}
+												key={deviceSoftware.id}
 												deviceSoftware={deviceSoftware}
 												software={software}
-												handleDeleteSoftware={
-													handleDeleteSoftware
+												setEditingSoftware={
+													setEditingSoftware
 												}
 												handleUnlinkSoftware={
 													handleUnlinkSoftware
 												}
-												setEditingSoftware={
-													setEditingSoftware
-												}
+												deviceId={deviceData.id}
 											/>
 										);
 									})}
@@ -873,11 +813,7 @@ export default function DeviceDetailScreen() {
 					>
 						<YStack gap="$3">
 							{/* Header */}
-							<XStack
-								key="creds-header"
-								alignItems="center"
-								gap="$2"
-							>
+							<XStack alignItems="center" gap="$2">
 								<Key size={20} color={AppColors.warning} />
 								<Text
 									fontSize={16}
@@ -888,20 +824,11 @@ export default function DeviceDetailScreen() {
 								</Text>
 							</XStack>
 
-							<Separator
-								key="sep-creds"
-								borderColor={AppColors.border}
-							/>
+							<Separator borderColor={AppColors.border} />
 
 							{/* Placeholder - Will be implemented later */}
-							<YStack
-								key="creds-placeholder"
-								padding="$3"
-								alignItems="center"
-								gap="$2"
-							>
+							<YStack padding="$3" alignItems="center" gap="$2">
 								<Ionicons
-									name="key-outline"
 									size={32}
 									color={AppColors.textMuted}
 								/>
@@ -918,7 +845,6 @@ export default function DeviceDetailScreen() {
 					{/* Action Buttons */}
 					<XStack gap="$3" flexWrap="wrap">
 						<Button
-							key="btn-copy"
 							flex={1}
 							minWidth={150}
 							size="$4"
@@ -926,7 +852,7 @@ export default function DeviceDetailScreen() {
 							color="white"
 							icon={Copy}
 							fontWeight="700"
-							borderRadius="$10"
+							borderRadius="$4"
 							pressStyle={{
 								backgroundColor: AppColors.infoDark,
 								scale: 0.97,
@@ -937,7 +863,6 @@ export default function DeviceDetailScreen() {
 							Sao chép SN
 						</Button>
 						<Button
-							key="btn-share"
 							flex={1}
 							minWidth={150}
 							size="$4"
@@ -945,7 +870,7 @@ export default function DeviceDetailScreen() {
 							color="white"
 							icon={Share2}
 							fontWeight="700"
-							borderRadius="$10"
+							borderRadius="$4"
 							pressStyle={{
 								backgroundColor: AppColors.successDark,
 								scale: 0.97,
@@ -956,7 +881,6 @@ export default function DeviceDetailScreen() {
 							Chia sẻ
 						</Button>
 						<Button
-							key="btn-qr"
 							flex={1}
 							minWidth={150}
 							size="$4"
@@ -970,7 +894,7 @@ export default function DeviceDetailScreen() {
 								/>
 							}
 							fontWeight="700"
-							borderRadius="$10"
+							borderRadius="$4"
 							pressStyle={{
 								backgroundColor: AppColors.primaryDark,
 								scale: 0.97,

@@ -60,15 +60,16 @@ interface DeviceAssignmentResponse {
 // Device Software Types
 interface DeviceSoftwareResponse {
 	id: string;
-	deviceId: string;
-	softwareId: string;
-	installedDate: string;
+	device: DeviceResponse | string; // Can be populated object or just ID
+	software: SoftwareResponse | string; // Can be populated object or just ID
+	installedDate?: string;
 	licenseKey?: string;
 	version?: string;
-	createdAt: string;
-	updatedAt: string;
-	// Populated software details (when API includes them)
-	software?: SoftwareResponse;
+	createdAt?: string;
+	updatedAt?: string;
+	// For backward compatibility
+	deviceId?: string;
+	softwareId?: string;
 }
 
 // QR Code Response

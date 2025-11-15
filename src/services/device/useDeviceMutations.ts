@@ -243,7 +243,6 @@ export function useUnlinkSoftware() {
 			queryClient.invalidateQueries({
 				queryKey: [API_KEYS.ALL_DEVICE_SOFTWARE_LINKS],
 			});
-			console.log('✅ Software unlinked from device successfully');
 		},
 		onError: (error: Error) => {
 			console.error('❌ Failed to unlink software:', error.message);

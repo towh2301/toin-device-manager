@@ -8,25 +8,42 @@ import { Alert, Pressable } from 'react-native';
 import { Button, Card, Separator, Text, XStack, YStack } from 'tamagui';
 
 type SoftwareCardProps = {
-	handleDeleteSoftware: (softwareId: string, softwareName: string) => void;
-	handleUnlinkSoftware: (softwareId: string, softwareName: string) => void;
 	setEditingSoftware: React.Dispatch<
-		React.SetStateAction<{ id: string; data: any } | null>
+		React.SetStateAction<{ id: string; data?: SoftwareResponse } | null>
 	>;
 	deviceSoftware: DeviceSoftwareResponse;
 	software?: SoftwareResponse | undefined;
+	deviceId: string;
+	handleUnlinkSoftware?: any;
 };
 
 export default function SoftwareCard({
-	handleDeleteSoftware,
-	handleUnlinkSoftware,
-	deviceSoftware,
 	software,
 	setEditingSoftware,
+	deviceSoftware,
+	deviceId,
+	handleUnlinkSoftware,
 }: SoftwareCardProps) {
 	const [expandedSoftware, setExpandedSoftware] = React.useState<string[]>(
 		[]
 	);
+
+	// Get the software ID - handle both populated object and string ID
+	const softwareId =
+		typeof deviceSoftware.software === 'object'
+			? (deviceSoftware.software as any)?._id
+			: deviceSoftware.software;
+
+	console.log('🔍 [SoftwareCard] Initialized:', {
+		'deviceSoftware.id': deviceSoftware.id,
+		'deviceSoftware.software': deviceSoftware.software,
+		'typeof deviceSoftware.software': typeof deviceSoftware.software,
+		softwareId,
+		'software prop': software,
+		deviceId,
+	});
+
+	const isExpanded = expandedSoftware.includes(deviceSoftware.id);
 
 	const toggleSoftwareExpand = (softwareId: string) => {
 		setExpandedSoftware((prev) =>
@@ -36,19 +53,17 @@ export default function SoftwareCard({
 		);
 	};
 
-	const isExpanded = expandedSoftware.includes(deviceSoftware.softwareId);
-
 	return (
 		<Card
-			key={deviceSoftware.softwareId}
+			// Only key on Card if it's in a list (in parent .map())
 			backgroundColor={AppColors.background}
 			borderWidth={1}
 			borderColor={AppColors.border}
 			borderRadius="$3"
 			padding="$3"
 		>
-			<YStack gap="$2" key={deviceSoftware.softwareId}>
-				{/* Software Header - Clickable to expand/collapse */}
+			<YStack gap="$2">
+				{/* Header */}
 				<Pressable
 					onPress={() => toggleSoftwareExpand(deviceSoftware.id)}
 				>
@@ -62,15 +77,16 @@ export default function SoftwareCard({
 								alignItems="center"
 								justifyContent="center"
 							>
-								<Text fontSize={18}>💿</Text>
+								<Text fontSize={18}>CD</Text>
 							</YStack>
+
 							<YStack flex={1}>
 								<Text
 									fontSize={14}
 									fontWeight="700"
 									color={AppColors.text}
 								>
-									{software?.name ||
+									{software?.name ??
 										`Software #${deviceSoftware.softwareId}`}
 								</Text>
 								{software?.version && (
@@ -83,15 +99,12 @@ export default function SoftwareCard({
 								)}
 							</YStack>
 						</XStack>
-						<XStack alignItems="center" gap="$1">
-							<Ionicons
-								name={
-									isExpanded ? 'chevron-up' : 'chevron-down'
-								}
-								size={20}
-								color={AppColors.textMuted}
-							/>
-						</XStack>
+
+						<Ionicons
+							name={isExpanded ? 'chevron-up' : 'chevron-down'}
+							size={20}
+							color={AppColors.textMuted}
+						/>
 					</XStack>
 				</Pressable>
 
@@ -102,14 +115,11 @@ export default function SoftwareCard({
 							borderColor={AppColors.border}
 							marginVertical="$2"
 						/>
-
 						{/* Action Buttons */}
 						<XStack gap="$2" marginBottom="$2">
 							<Button
 								flex={1}
-								size="$2"
 								backgroundColor={AppColors.warning}
-								color="white"
 								icon={
 									<Ionicons
 										name="create-outline"
@@ -119,42 +129,20 @@ export default function SoftwareCard({
 								}
 								onPress={() =>
 									setEditingSoftware({
-										id: software?.id || '',
+										id:
+											(software as any)?._id ||
+											software?.id ||
+											'',
 										data: software,
 									})
 								}
 								height={32}
 							>
-								Sửa
+								<Text color="white">Sửa</Text>
 							</Button>
+
 							<Button
 								flex={1}
-								size="$2"
-								backgroundColor={AppColors.danger}
-								color="white"
-								icon={
-									<Ionicons
-										name="trash-outline"
-										size={16}
-										color="white"
-									/>
-								}
-								onPress={() =>
-									handleDeleteSoftware(
-										software?.id || '',
-										software?.name ||
-											`Software #${deviceSoftware.softwareId}`
-									)
-								}
-								height={32}
-							>
-								Xóa
-							</Button>
-							<Button
-								flex={1}
-								size="$2"
-								backgroundColor={AppColors.info}
-								color="white"
 								icon={
 									<Ionicons
 										name="unlink-outline"
@@ -162,19 +150,44 @@ export default function SoftwareCard({
 										color="white"
 									/>
 								}
-								onPress={() =>
+								onPress={() => {
+									// Lấy software ID từ _id (MongoDB format)
+									const actualSoftwareId =
+										(typeof deviceSoftware.software ===
+										'object'
+											? (deviceSoftware.software as any)
+													?._id ||
+												deviceSoftware.software?.id
+											: deviceSoftware.software) || '';
+
+									console.log('🔘 [Unlink Button] Click:', {
+										'deviceSoftware.software':
+											deviceSoftware.software,
+										actualSoftwareId,
+										deviceId,
+									});
+
+									if (!actualSoftwareId) {
+										Alert.alert(
+											'Lỗi',
+											'Không tìm thấy Software ID'
+										);
+										return;
+									}
+
 									handleUnlinkSoftware(
-										deviceSoftware.softwareId,
-										software?.name ||
-											`Software #${deviceSoftware.softwareId}`
-									)
-								}
+										actualSoftwareId,
+										software?.name ??
+											`Software #${deviceSoftware.id}`
+									);
+								}}
+								backgroundColor={AppColors.retired}
 								height={32}
+								width="auto"
 							>
-								Gỡ
+								<Text color="white">Gỡ</Text>
 							</Button>
 						</XStack>
-
 						<Separator borderColor={AppColors.border} />
 
 						{/* Software Details */}
@@ -215,7 +228,7 @@ export default function SoftwareCard({
 											}
 											onPress={() =>
 												Clipboard.setStringAsync(
-													software.licenseKey || ''
+													software?.licenseKey ?? ''
 												)
 											}
 										/>
@@ -264,9 +277,9 @@ export default function SoftwareCard({
 										fontWeight="600"
 									>
 										{new Date(
-											software.expiredDate
+											software?.expiredDate
 										).toLocaleDateString('vi-VN')}
-										{new Date(software.expiredDate) <
+										{new Date(software?.expiredDate) <
 											new Date() && ' (Hết hạn)'}
 									</Text>
 								</XStack>
@@ -291,8 +304,7 @@ export default function SoftwareCard({
 								</XStack>
 							)}
 						</YStack>
-
-						{/* Account Info (if exists) */}
+						{/* Account Info */}
 						{software?.account && (
 							<>
 								<Separator
@@ -305,7 +317,7 @@ export default function SoftwareCard({
 										fontWeight="700"
 										color={AppColors.text}
 									>
-										🔐 Account Login
+										Account Login
 									</Text>
 
 									<XStack alignItems="center" gap="$2">
@@ -342,8 +354,8 @@ export default function SoftwareCard({
 												}
 												onPress={() =>
 													Clipboard.setStringAsync(
-														software.account
-															?.username || ''
+														software?.account
+															?.username ?? ''
 													)
 												}
 											/>
@@ -367,9 +379,7 @@ export default function SoftwareCard({
 												fontSize={11}
 												fontWeight="600"
 												color={AppColors.text}
-											>
-												••••••••
-											</Text>
+											></Text>
 											<Button
 												size="$1"
 												circular
@@ -387,7 +397,7 @@ export default function SoftwareCard({
 													Alert.alert(
 														'Password',
 														software.account
-															?.password || 'N/A'
+															?.password ?? 'N/A'
 													)
 												}
 											/>
@@ -405,7 +415,7 @@ export default function SoftwareCard({
 												onPress={() =>
 													Clipboard.setStringAsync(
 														software.account
-															?.password || ''
+															?.password ?? ''
 													)
 												}
 											/>
@@ -455,14 +465,15 @@ export default function SoftwareCard({
 								</YStack>
 							</>
 						)}
-
 						{/* Install Date */}
 						<XStack alignItems="center" gap="$2" marginTop="$2">
 							<Text fontSize={11} color={AppColors.textMuted}>
-								📅 Installed:{' '}
-								{new Date(
-									deviceSoftware.installedDate
-								).toLocaleDateString('vi-VN')}
+								Installed:{' '}
+								{deviceSoftware.installedDate
+									? new Date(
+											deviceSoftware.installedDate
+										).toLocaleDateString('vi-VN')
+									: 'N/A'}
 							</Text>
 						</XStack>
 					</>

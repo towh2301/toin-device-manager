@@ -165,7 +165,7 @@ const useSoftwareApi = (baseURL = API_URL) => {
 		deviceId: string,
 		softwareId: string
 	) => {
-		const endpoint = `/device/${deviceId}/link-software/${softwareId}`;
+		const endpoint = `/devices/${deviceId}/link-software/${softwareId}`;
 		try {
 			const { data } =
 				await privateApi.post<
@@ -186,7 +186,7 @@ const useSoftwareApi = (baseURL = API_URL) => {
 		deviceId: string,
 		softwareId: string
 	) => {
-		const endpoint = `/device/${deviceId}/unlink-software/${softwareId}`;
+		const endpoint = `/devices/${deviceId}/unlink-software/${softwareId}`;
 		try {
 			const { data } =
 				await privateApi.post<
@@ -201,10 +201,10 @@ const useSoftwareApi = (baseURL = API_URL) => {
 
 	/**
 	 * Get all software for a specific device
-	 * GET /device/:deviceId/software
+	 * GET /devices/:deviceId/software
 	 */
 	const getSoftwareForDevice = async (deviceId: string) => {
-		const endpoint = `/device/${deviceId}/software`;
+		const endpoint = `/devices/${deviceId}/software`;
 		try {
 			const { data } =
 				await privateApi.get<ApiResponseType<SoftwareResponse[]>>(
