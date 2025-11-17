@@ -146,7 +146,7 @@ export default function CredentialModal({
 				<Card
 					width="92%"
 					maxWidth={520}
-					maxHeight="85%"+
+					maxHeight="85%"
 					padding="$4"
 					borderRadius="$6"
 					backgroundColor={AppColors.background}
