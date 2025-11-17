@@ -48,7 +48,7 @@ const useCredentialApi = (baseURL = API_URL) => {
 	 * GET /credential
 	 */
 	const getAllCredentials = async () => {
-		const endpoint = '/credential';
+		const endpoint = '/credentials';
 		try {
 			const { data } =
 				await privateApi.get<ApiResponseType<CredentialResponse[]>>(
@@ -66,7 +66,7 @@ const useCredentialApi = (baseURL = API_URL) => {
 	 * GET /credential/:id
 	 */
 	const getCredentialById = async (id: string) => {
-		const endpoint = `/credential/${id}`;
+		const endpoint = `/credentials/${id}`;
 		try {
 			const { data } =
 				await privateApi.get<ApiResponseType<CredentialResponse>>(
@@ -83,7 +83,7 @@ const useCredentialApi = (baseURL = API_URL) => {
 	 * POST /credential
 	 */
 	const createCredential = async (payload: CredentialCreatePayload) => {
-		const endpoint = '/credential';
+		const endpoint = '/credentials';
 		try {
 			const { data } = await privateApi.post<
 				ApiResponseType<CredentialResponse>
@@ -103,7 +103,7 @@ const useCredentialApi = (baseURL = API_URL) => {
 		id: string,
 		payload: CredentialUpdatePayload
 	) => {
-		const endpoint = `/credential/${id}`;
+		const endpoint = `/credentials/${id}`;
 		try {
 			const { data } = await privateApi.patch<
 				ApiResponseType<CredentialResponse>
@@ -120,15 +120,14 @@ const useCredentialApi = (baseURL = API_URL) => {
 	 * DELETE /credential/:id
 	 */
 	const deleteCredential = async (id: string) => {
-		const endpoint = `/credential/${id}`;
+		const endpoint = `/credentials/${id}`;
 		try {
-			const { data } =
-				await privateApi.delete<
-					ApiResponseType<{
-						id: string | number;
-						service_name: string;
-					}>
-				>(endpoint);
+			const { data } = await privateApi.delete<
+				ApiResponseType<{
+					id: string | number;
+					service_name: string;
+				}>
+			>(endpoint);
 			console.log('✅ [CredentialApi] deleteCredential:', data);
 			return data;
 		} catch (error) {

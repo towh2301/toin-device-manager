@@ -1,5 +1,7 @@
 // Credential Management Types - Based on API Documentation
 
+import { Department } from '../toin-user';
+
 /**
  * Credential Response from API
  * GET /credential
@@ -7,13 +9,10 @@
  */
 export interface CredentialResponse {
 	id: string | number;
-	service_name: string;
 	username: string;
 	password: string; // Encrypted password
-	api_key?: string;
-	notes?: string;
-	createdAt: string;
-	updatedAt: string;
+	departments?: Department[];
+	allowedFolders?: string[];
 }
 
 /**
@@ -21,11 +20,10 @@ export interface CredentialResponse {
  * POST /credential
  */
 export interface CredentialCreatePayload {
-	service_name: string;
 	username: string;
-	password: string;
-	api_key?: string;
-	notes?: string;
+	password: string; // Encrypted password
+	departments?: Department[];
+	allowedFolders?: string[];
 }
 
 /**
@@ -34,11 +32,10 @@ export interface CredentialCreatePayload {
  * All fields are optional
  */
 export interface CredentialUpdatePayload {
-	service_name?: string;
-	username?: string;
-	password?: string;
-	api_key?: string;
-	notes?: string;
+	username: string;
+	password: string; // Encrypted password
+	departments?: Department[];
+	allowedFolders?: string[];
 }
 
 /**

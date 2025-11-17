@@ -31,6 +31,7 @@ import * as Clipboard from 'expo-clipboard';
 import React, { useState } from 'react';
 import { Alert, ScrollView, Share } from 'react-native';
 import { Button, Card, Separator, Text, XStack, YStack } from 'tamagui';
+import CredentialModal from './credential/CredentailModal';
 import PrintQRModal from './printer/PrintQRModal';
 import SoftwareCard from './software/SoftwareCard';
 import SoftwareEditModal from './software/SoftwareEditModal';
@@ -49,6 +50,7 @@ type EditSoftwareProps = {
 export default function DeviceDetailScreen() {
 	const [showAssignModal, setShowAssignModal] = useState(false);
 	const [showSoftwareModal, setShowSoftwareModal] = useState(false);
+	const [showCredentailModal, setShowCredentialModal] = useState(false);
 	const [expandedSoftware, setExpandedSoftware] = useState<string[]>([]);
 	const [showPrintQRModal, setShowPrintQRModal] = useState(false);
 	const [editingSoftware, setEditingSoftware] =
@@ -65,7 +67,8 @@ export default function DeviceDetailScreen() {
 		useGetDeviceAssignments(deviceData?.id || '');
 	const { data: softwareResponse, refetch: refetchSoftware } =
 		useGetDeviceSoftware(deviceData?.id || '');
-	const { credentialData, onGetAllCredentials } = useGetAllCredentials();
+	const { data: credentialResponse, refetch: refetchCredentials } =
+		useGetAllCredentials();
 
 	// Mutations - MUST be called before any conditional returns
 	const unassignMutation = useUnassignDevice();
@@ -73,8 +76,8 @@ export default function DeviceDetailScreen() {
 
 	// Extract data from API responses
 	const assignments = assignmentsResponse?.data || [];
-	const softwareList = softwareResponse?.data || [];
-	const credentialsList = credentialData || [];
+	const softwares = softwareResponse?.data || [];
+	const credentials = credentialResponse || [];
 
 	// Find current assignment (returned_date is null/undefined)
 	const currentAssignment = assignments.find(
@@ -725,7 +728,7 @@ export default function DeviceDetailScreen() {
 										paddingVertical="$1"
 										borderRadius="$2"
 									>
-										{softwareList.length} phần mềm
+										{softwares.length} phần mềm
 									</Text>
 									<Button
 										size="$2"
@@ -755,9 +758,9 @@ export default function DeviceDetailScreen() {
 								marginVertical="$2"
 							/>
 
-							{softwareList.length > 0 ? (
+							{softwares.length > 0 ? (
 								<YStack gap="$2">
-									{softwareList.map((deviceSoftware) => {
+									{softwares.map((deviceSoftware, index) => {
 										const software =
 											typeof deviceSoftware.software ===
 											'object'
@@ -766,7 +769,7 @@ export default function DeviceDetailScreen() {
 
 										return (
 											<SoftwareCard
-												key={deviceSoftware.id}
+												key={index}
 												deviceSoftware={deviceSoftware}
 												software={software}
 												setEditingSoftware={
@@ -781,11 +784,7 @@ export default function DeviceDetailScreen() {
 									})}
 								</YStack>
 							) : (
-								<YStack
-									padding="$3"
-									alignItems="center"
-									gap="$2"
-								>
+								<YStack padding="$2" alignItems="center">
 									<Ionicons
 										name="laptop-outline"
 										size={32}
@@ -814,47 +813,88 @@ export default function DeviceDetailScreen() {
 						shadowOffset={{ width: 0, height: 2 }}
 						elevation={2}
 					>
-						<YStack gap="$3">
+						<YStack gap="$2">
 							{/* Header */}
 							<XStack
 								alignItems="center"
-								gap="$2"
-								justifyContent="space-around"
+								justifyContent="space-between"
 							>
-								<Key size={20} color={AppColors.warning} />
-								<Text
-									fontSize={16}
-									fontWeight="700"
-									color={AppColors.text}
-								>
-									Thông tin đăng nhập
-								</Text>
-								<Text
-									fontSize={12}
-									color={AppColors.textMuted}
-									backgroundColor={AppColors.info + '20'}
-									paddingHorizontal="$2"
-									paddingVertical="$1"
-									borderRadius="$2"
-								>
-									{credentialsList.length} mục
-								</Text>
+								<XStack alignItems="center" gap="$2">
+									<Key size={20} color={AppColors.warning} />
+									<Text
+										fontSize={16}
+										fontWeight="700"
+										color={AppColors.text}
+									>
+										Thông tin đăng nhập
+									</Text>
+								</XStack>
+								<XStack alignItems="center" gap="$2">
+									<Button
+										size="$2"
+										backgroundColor={AppColors.primary}
+										color="white"
+										borderRadius="$2"
+										paddingHorizontal="$3"
+										icon={
+											<Ionicons
+												name="add"
+												size={16}
+												color="white"
+											/>
+										}
+										onPress={() =>
+											setShowCredentialModal(true)
+										}
+										height={24}
+									>
+										Thêm
+									</Button>
+								</XStack>
 							</XStack>
-
 							<Separator borderColor={AppColors.border} />
+							<YStack gap="$2" alignItems="center">
+								{credentials.length > 0 ? (
+									<>
+										{softwares.map((deviceSoftware) => {
+											const software =
+												typeof deviceSoftware.software ===
+												'object'
+													? deviceSoftware.software
+													: undefined;
 
-							{/* Placeholder - Will be implemented later */}
-							<YStack padding="$3" alignItems="center" gap="$2">
-								<Ionicons
-									size={32}
-									color={AppColors.textMuted}
-								/>
-								<Text
-									fontSize={13}
-									color={AppColors.textSecondary}
-								>
-									Chưa có thông tin đăng nhập
-								</Text>
+											return (
+												<SoftwareCard
+													deviceSoftware={
+														deviceSoftware
+													}
+													software={software}
+													setEditingSoftware={
+														setEditingSoftware
+													}
+													handleUnlinkSoftware={
+														handleUnlinkSoftware
+													}
+													deviceId={deviceData.id}
+												/>
+											);
+										})}
+									</>
+								) : (
+									<>
+										<Ionicons
+											name="key-outline"
+											size={32}
+											color={AppColors.textMuted}
+										/>
+										<Text
+											fontSize={13}
+											color={AppColors.textSecondary}
+										>
+											Chưa có thông tin đăng nhập
+										</Text>
+									</>
+								)}
 							</YStack>
 						</YStack>
 					</Card>
@@ -947,7 +987,7 @@ export default function DeviceDetailScreen() {
 				visible={showSoftwareModal}
 				onClose={() => setShowSoftwareModal(false)}
 				deviceId={deviceData?.id || ''}
-				softwareList={softwareList}
+				softwareList={softwares}
 				onSuccess={refetchSoftware}
 			/>
 
@@ -959,6 +999,14 @@ export default function DeviceDetailScreen() {
 				serialNumber={deviceData?.serialNumber || ''}
 				deviceType={deviceData?.type}
 				brand={deviceData?.brand}
+			/>
+
+			<CredentialModal
+				visible={showCredentailModal}
+				onClose={() => setShowCredentialModal(false)}
+				onSuccess={() =>
+					Alert.alert('✓ Thành công', 'Đã thêm thông tin thành công')
+				}
 			/>
 		</>
 	);

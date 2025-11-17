@@ -32,11 +32,11 @@ export function useGetAllCredentials(
 	});
 
 	return {
-		credentialData: query.data?.data,
+		data: query.data?.data,
 		isLoading: query.isLoading,
 		isError: query.isError,
 		error: query.error,
-		onGetAllCredentials: query.refetch,
+		refetch: query.refetch,
 	};
 }
 
