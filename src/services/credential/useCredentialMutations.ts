@@ -38,15 +38,15 @@ export function useUpdateCredential() {
 
 	return useMutation({
 		mutationFn: ({
-			id,
+			credentialId,
 			payload,
 		}: {
-			id: string;
+			credentialId: string;
 			payload: CredentialUpdatePayload;
-		}) => api.updateCredential(id, payload),
+		}) => api.updateCredential(credentialId, payload),
 		onSuccess: (data, variables) => {
 			queryClient.invalidateQueries({
-				queryKey: [API_KEYS.CREDENTIAL_BY_ID, variables.id],
+				queryKey: [API_KEYS.CREDENTIAL_BY_ID, variables.credentialId],
 			});
 			queryClient.invalidateQueries({
 				queryKey: [API_KEYS.ALL_CREDENTIALS],

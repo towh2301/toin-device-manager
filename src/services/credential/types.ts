@@ -8,7 +8,7 @@ import { Department } from '../toin-user';
  * GET /credential/:id
  */
 export interface CredentialResponse {
-	id: string | number;
+	id: string;
 	username: string;
 	password: string; // Encrypted password
 	departments?: Department[];

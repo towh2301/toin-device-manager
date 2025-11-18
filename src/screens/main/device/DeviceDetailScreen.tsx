@@ -31,7 +31,8 @@ import * as Clipboard from 'expo-clipboard';
 import React, { useState } from 'react';
 import { Alert, ScrollView, Share } from 'react-native';
 import { Button, Card, Separator, Text, XStack, YStack } from 'tamagui';
-import CredentialModal from './credential/CredentailModal';
+import CredentialCard from './credential/CredentialCard';
+import CredentialModal from './credential/CredentialModal';
 import PrintQRModal from './printer/PrintQRModal';
 import SoftwareCard from './software/SoftwareCard';
 import SoftwareEditModal from './software/SoftwareEditModal';
@@ -55,6 +56,7 @@ export default function DeviceDetailScreen() {
 	const [showPrintQRModal, setShowPrintQRModal] = useState(false);
 	const [editingSoftware, setEditingSoftware] =
 		useState<EditSoftwareProps | null>(null);
+
 	const route = useRoute<DeviceDetailRouteProp>();
 	const navigation = useNavigation<any>();
 	const serialNumber = route.params?.serialNumber || '';
@@ -604,12 +606,19 @@ export default function DeviceDetailScreen() {
 								) : (
 									<Button
 										size="$2"
-										backgroundColor={AppColors.primary}
+										backgroundColor={AppColors.dangerDark}
 										color="white"
 										onPress={() => setShowAssignModal(true)}
-										height={24}
+										height={25}
+										icon={
+											<Ionicons
+												name="add"
+												size={16}
+												color="white"
+											/>
+										}
 									>
-										Giao thiết bị
+										Bàn giao thiết bị
 									</Button>
 								)}
 							</XStack>
@@ -853,49 +862,34 @@ export default function DeviceDetailScreen() {
 								</XStack>
 							</XStack>
 							<Separator borderColor={AppColors.border} />
-							<YStack gap="$2" alignItems="center">
-								{credentials.length > 0 ? (
-									<>
-										{softwares.map((deviceSoftware) => {
-											const software =
-												typeof deviceSoftware.software ===
-												'object'
-													? deviceSoftware.software
-													: undefined;
-
-											return (
-												<SoftwareCard
-													deviceSoftware={
-														deviceSoftware
-													}
-													software={software}
-													setEditingSoftware={
-														setEditingSoftware
-													}
-													handleUnlinkSoftware={
-														handleUnlinkSoftware
-													}
-													deviceId={deviceData.id}
-												/>
-											);
-										})}
-									</>
-								) : (
-									<>
-										<Ionicons
-											name="key-outline"
-											size={32}
-											color={AppColors.textMuted}
-										/>
-										<Text
-											fontSize={13}
-											color={AppColors.textSecondary}
-										>
-											Chưa có thông tin đăng nhập
-										</Text>
-									</>
-								)}
-							</YStack>
+							{credentials.length > 0 ? (
+								<YStack gap="$2">
+									{credentials.map((credential, index) => {
+										return (
+											<CredentialCard
+												key={index}
+												deviceId={deviceData.id}
+												credential={credential}
+												onSuccess={refetchCredentials} // ← Thêm dòng này
+											/>
+										);
+									})}
+								</YStack>
+							) : (
+								<YStack padding="$3" alignItems="center">
+									<Ionicons
+										name="key-outline"
+										size={32}
+										color={AppColors.textMuted}
+									/>
+									<Text
+										fontSize={13}
+										color={AppColors.textSecondary}
+									>
+										Chưa có thông tin đăng nhập
+									</Text>
+								</YStack>
+							)}
 						</YStack>
 					</Card>
 
@@ -1003,10 +997,13 @@ export default function DeviceDetailScreen() {
 
 			<CredentialModal
 				visible={showCredentailModal}
+				// editingCredential={editingCredential}
+				deviceId={deviceData.id}
+				credentialId=""
 				onClose={() => setShowCredentialModal(false)}
-				onSuccess={() =>
-					Alert.alert('✓ Thành công', 'Đã thêm thông tin thành công')
-				}
+				onSuccess={() => {
+					refetchCredentials();
+				}}
 			/>
 		</>
 	);

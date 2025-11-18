@@ -226,7 +226,7 @@ export default function SoftwareEditModal({
 										placeholderTextColor={
 											AppColors.textMuted
 										}
-										height={10}
+										height={40}
 									/>
 								</YStack>
 
@@ -248,6 +248,7 @@ export default function SoftwareEditModal({
 										placeholderTextColor={
 											AppColors.textMuted
 										}
+										height={40}
 									/>
 								</YStack>
 
@@ -269,6 +270,7 @@ export default function SoftwareEditModal({
 										placeholderTextColor={
 											AppColors.textMuted
 										}
+										height={40}
 									/>
 								</YStack>
 
@@ -290,6 +292,7 @@ export default function SoftwareEditModal({
 										placeholderTextColor={
 											AppColors.textMuted
 										}
+										height={40}
 									/>
 								</YStack>
 
@@ -450,6 +453,7 @@ export default function SoftwareEditModal({
 										placeholderTextColor={
 											AppColors.textMuted
 										}
+										height={40}
 									/>
 								</YStack>
 
@@ -472,6 +476,7 @@ export default function SoftwareEditModal({
 											AppColors.textMuted
 										}
 										secureTextEntry
+										height={40}
 									/>
 								</YStack>
 
@@ -495,6 +500,7 @@ export default function SoftwareEditModal({
 										}
 										keyboardType="email-address"
 										autoCapitalize="none"
+										height={40}
 									/>
 								</YStack>
 
@@ -536,6 +542,7 @@ export default function SoftwareEditModal({
 							color={AppColors.text}
 							onPress={handleClose}
 							disabled={updateSoftwareMutation.isPending}
+							height={30}
 						>
 							Hủy
 						</Button>
@@ -545,6 +552,7 @@ export default function SoftwareEditModal({
 							color="white"
 							onPress={handleUpdateSoftware}
 							disabled={updateSoftwareMutation.isPending}
+							height={30}
 						>
 							{updateSoftwareMutation.isPending
 								? 'Đang lưu...'
