@@ -1,3 +1,4 @@
+import { CredentialResponse } from '../credential';
 import { SoftwareResponse } from '../software';
 import { ToinUserResponse } from '../toin-user';
 
@@ -72,6 +73,12 @@ interface DeviceSoftwareResponse {
 	softwareId?: string;
 }
 
+interface DeviceCredentialResponse {
+	id: string;
+	device: DeviceResponse | string;
+	credential: CredentialResponse | string;
+}
+
 // QR Code Response
 interface QrCodeResponse {
 	qrCode: string; // Base64 encoded QR code image
@@ -129,6 +136,7 @@ export {
 	DeviceAssignmentPayload,
 	DeviceAssignmentResponse,
 	DeviceCreatePayload,
+	DeviceCredentialResponse,
 	DeviceFilter,
 	DeviceResponse,
 	DeviceSoftwareResponse,

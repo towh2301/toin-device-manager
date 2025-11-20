@@ -12,6 +12,7 @@ type CredentialCardProps = {
 	credential: CredentialResponse;
 	onDelete?: (credentialId: string | number) => void;
 	onSuccess?: () => void; // Add this for refresh callback
+	isSelectExisting: boolean;
 };
 
 export default function CredentialCard({
@@ -19,6 +20,7 @@ export default function CredentialCard({
 	credential,
 	onDelete,
 	onSuccess,
+	isSelectExisting,
 }: CredentialCardProps) {
 	const [isExpanded, setIsExpanded] = useState<boolean>(false);
 	const [showPassword, setShowPassword] = useState<boolean>(false);
@@ -142,34 +144,37 @@ export default function CredentialCard({
 					{/* Expanded Content */}
 					{isExpanded && (
 						<>
-							<Separator
-								borderColor={AppColors.border}
-								marginVertical="$2"
-							/>
-
 							{/* Action Buttons */}
 							<XStack gap="$2" marginBottom="$2">
-								<Button
-									flex={1}
-									backgroundColor={AppColors.warning}
-									icon={
-										<Ionicons
-											name="create-outline"
-											size={16}
-											color="white"
+								{!isSelectExisting && (
+									<>
+										<Separator
+											borderColor={AppColors.border}
+											marginVertical="$2"
 										/>
-									}
-									onPress={() => {
-										setEditingCredential({
-											id: credential.id,
-											data: credential,
-										});
-										setIsShowModal(true);
-									}}
-									height={32}
-								>
-									<Text color="white">Sửa</Text>
-								</Button>
+										<Button
+											flex={1}
+											backgroundColor={AppColors.warning}
+											icon={
+												<Ionicons
+													name="create-outline"
+													size={16}
+													color="white"
+												/>
+											}
+											onPress={() => {
+												setEditingCredential({
+													id: credential.id,
+													data: credential,
+												});
+												setIsShowModal(true);
+											}}
+											height={32}
+										>
+											<Text color="white">Sửa</Text>
+										</Button>
+									</>
+								)}
 
 								{onDelete && (
 									<Button

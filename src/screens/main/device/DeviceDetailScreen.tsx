@@ -13,6 +13,7 @@ import {
 	useUnlinkSoftware,
 } from '@/src/services/device';
 import { DeviceType } from '@/src/services/device/types';
+import { useGetDeviceCredentialLinks } from '@/src/services/device/useDeviceQueries';
 import { SoftwareResponse } from '@/src/services/software';
 import { Ionicons } from '@expo/vector-icons';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
@@ -64,13 +65,17 @@ export default function DeviceDetailScreen() {
 	const { deviceData, isLoading, isError, error } =
 		useGetDeviceBySerialNumber(serialNumber);
 
-	// Get device assignments and software - MUST be called before any conditional returns
+	// Get device assignments, software, credentials - MUST be called before any conditional returns
 	const { data: assignmentsResponse, refetch: refetchAssignments } =
 		useGetDeviceAssignments(deviceData?.id || '');
 	const { data: softwareResponse, refetch: refetchSoftware } =
 		useGetDeviceSoftware(deviceData?.id || '');
+
 	const { data: credentialResponse, refetch: refetchCredentials } =
 		useGetAllCredentials();
+	const { data: deviceCredentialResponse } = useGetDeviceCredentialLinks(
+		deviceData?.id || ''
+	);
 
 	// Mutations - MUST be called before any conditional returns
 	const unassignMutation = useUnassignDevice();
@@ -80,6 +85,7 @@ export default function DeviceDetailScreen() {
 	const assignments = assignmentsResponse?.data || [];
 	const softwares = softwareResponse?.data || [];
 	const credentials = credentialResponse || [];
+	const deviceCredentials = deviceCredentialResponse?.data || [];
 
 	// Find current assignment (returned_date is null/undefined)
 	const currentAssignment = assignments.find(
@@ -862,7 +868,7 @@ export default function DeviceDetailScreen() {
 								</XStack>
 							</XStack>
 							<Separator borderColor={AppColors.border} />
-							{credentials.length > 0 ? (
+							{deviceCredentials.length > 0 ? (
 								<YStack gap="$2">
 									{credentials.map((credential, index) => {
 										return (
@@ -871,6 +877,7 @@ export default function DeviceDetailScreen() {
 												deviceId={deviceData.id}
 												credential={credential}
 												onSuccess={refetchCredentials} // ← Thêm dòng này
+												isSelectExisting={false}
 											/>
 										);
 									})}
@@ -1004,6 +1011,7 @@ export default function DeviceDetailScreen() {
 				onSuccess={() => {
 					refetchCredentials();
 				}}
+				credentials={credentials}
 			/>
 		</>
 	);

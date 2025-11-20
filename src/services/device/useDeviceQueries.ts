@@ -14,6 +14,7 @@ import { API_KEYS } from '../keys';
 import useDeviceApi from './api';
 import {
 	DeviceAssignmentResponse,
+	DeviceCredentialResponse,
 	DeviceResponse,
 	DeviceSoftwareResponse,
 	QrCodeResponse,
@@ -432,6 +433,35 @@ export function useGenerateQrCode(
 		},
 		enabled: !!deviceId,
 		staleTime: 10 * 60 * 1000, // 10 minutes (QR codes don't change often)
+		gcTime: 30 * 60 * 1000, // 30 minutes
+		...options,
+	});
+}
+
+export function useGetDeviceCredentialLinks(
+	deviceId: string,
+	options?: UseQueryOptions<
+		ApiResponseType<DeviceCredentialResponse[]>,
+		Error
+	>
+) {
+	const api = useDeviceApi();
+
+	return useQuery<ApiResponseType<DeviceCredentialResponse[]>, Error>({
+		queryKey: [API_KEYS.CREDENTIAL_BY_DEVICE, deviceId],
+		queryFn: async () => {
+			console.log(
+				'[useGetDeviceCredentialLinks] Getting for device',
+				deviceId
+			);
+			const response = await responseWrapper<
+				ApiResponseType<DeviceCredentialResponse[]>
+			>(api.getCredentialByDevice, [deviceId]);
+
+			return response;
+		},
+		enabled: !!deviceId,
+		staleTime: 10 * 60 * 1000,
 		gcTime: 30 * 60 * 1000, // 30 minutes
 		...options,
 	});

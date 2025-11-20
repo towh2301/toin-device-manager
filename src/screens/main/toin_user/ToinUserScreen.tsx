@@ -423,10 +423,10 @@ const ToinUserScreen = () => {
 				</Text>
 				<Button
 					backgroundColor={AppColors.primary}
-					color="white"
 					onPress={() => onGetAllToinUsers()}
+					height={40}
 				>
-					<Text>Thử lại</Text>
+					<Text color="white">Thử lại</Text>
 				</Button>
 			</YStack>
 		);

@@ -6,6 +6,7 @@ import {
 	DeviceAssignmentPayload,
 	DeviceAssignmentResponse,
 	DeviceCreatePayload,
+	DeviceCredentialResponse,
 	DeviceResponse,
 	DeviceSoftwareResponse,
 	DeviceUpdatePayload,
@@ -136,7 +137,7 @@ const useDeviceApi = (baseURL = API_URL) => {
 	 * POST /devices/assign
 	 */
 	const assignDevice = async (payload: DeviceAssignmentPayload) => {
-		const endpoint = '/devices/assign';
+		const endpoint = '/devices/assignments/assign';
 		try {
 			const { data } = await privateApi.post<
 				ApiResponseType<DeviceAssignmentResponse>
@@ -152,7 +153,7 @@ const useDeviceApi = (baseURL = API_URL) => {
 	 * DELETE /devices/unassign/:assignmentId
 	 */
 	const unassignDevice = async (assignmentId: string) => {
-		const endpoint = `/devices/unassign/${assignmentId}`;
+		const endpoint = `/devices/assignments/unassign/${assignmentId}`;
 		try {
 			const { data } =
 				await privateApi.delete<
@@ -210,7 +211,7 @@ const useDeviceApi = (baseURL = API_URL) => {
 		deviceId: string,
 		softwareId: string
 	) => {
-		const endpoint = `/devices/${deviceId}/link-software/${softwareId}`;
+		const endpoint = `/devices/software/${deviceId}/link/${softwareId}`;
 		try {
 			const { data } =
 				await privateApi.post<ApiResponseType<DeviceSoftwareResponse>>(
@@ -230,12 +231,12 @@ const useDeviceApi = (baseURL = API_URL) => {
 		deviceId: string,
 		softwareId: string
 	) => {
-		const endpoint = `/devices/${deviceId}/unlink-software/${softwareId}`;
+		const endpoint = `/devices/software/${deviceId}/unlink/${softwareId}`;
 		try {
 			const { data } =
-				await privateApi.post<ApiResponseType<DeviceSoftwareResponse>>(
-					endpoint
-				);
+				await privateApi.delete<
+					ApiResponseType<DeviceSoftwareResponse>
+				>(endpoint);
 			return data;
 		} catch (error) {
 			handleAxiosError(error, `POST ${endpoint}`, baseURL);
@@ -264,7 +265,7 @@ const useDeviceApi = (baseURL = API_URL) => {
 	 * GET /devices/links/software/:deviceSoftwareId
 	 */
 	const getDeviceSoftwareLink = async (deviceSoftwareId: string) => {
-		const endpoint = `/devices/links/software/${deviceSoftwareId}`;
+		const endpoint = `/devices/software/links/${deviceSoftwareId}`;
 		try {
 			const { data } =
 				await privateApi.get<ApiResponseType<DeviceSoftwareResponse>>(
@@ -312,6 +313,20 @@ const useDeviceApi = (baseURL = API_URL) => {
 		}
 	};
 
+	// Get credential by device
+	const getCredentialByDevice = async (deviceId: string) => {
+		const endpoint = `/devices/${deviceId}/credentials`;
+		try {
+			const { data } =
+				await privateApi.get<ApiResponseType<DeviceCredentialResponse>>(
+					endpoint
+				);
+			return data;
+		} catch (error) {
+			handleAxiosError(error, `GET ${endpoint}`, baseURL);
+		}
+	};
+
 	return {
 		// Device CRUD
 		createDevice,
@@ -336,6 +351,9 @@ const useDeviceApi = (baseURL = API_URL) => {
 
 		// QR Code
 		generateQrCode,
+
+		// Credential Device
+		getCredentialByDevice,
 	};
 };
 
