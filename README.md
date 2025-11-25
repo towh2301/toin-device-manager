@@ -1,6 +1,6 @@
 ## 📸 Demo Project – toin-device-manager
 
-<div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 10px;">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-around; gap: 10px; align-items: center;">
   <img src="./imgs/1.jpg" width="120" />
   <img src="./imgs/2.jpg" width="120" />
   <img src="./imgs/3.jpg" width="120" />
