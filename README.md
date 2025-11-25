@@ -1,10 +1,12 @@
 ## 📸 Demo Project – toin-device-manager
 
-<div style="display: flex; flex-wrap: wrap; justify-content: space-around; gap: 10px; align-items: center;">
-  <img src="./imgs/1.jpg" width="120" />
-  <img src="./imgs/2.jpg" width="120" />
-  <img src="./imgs/3.jpg" width="120" />
-  <img src="./imgs/10.jpg" width="120" />
-  <img src="./imgs/11.jpg" width="120" />
-  <img src="./imgs/qr.jpg" width="120" />
-</div>
+<table>
+  <tr>
+    <td><img src="./imgs/1.jpg" width="120" /></td>
+    <td><img src="./imgs/2.jpg" width="120" /></td>
+    <td><img src="./imgs/3.jpg" width="120" /></td>
+    <td><img src="./imgs/10.jpg" width="120" /></td>
+    <td><img src="./imgs/11.jpg" width="120" /></td>
+    <td><img src="./imgs/qr.jpg" width="120" /></td>
+  </tr>
+</table>
