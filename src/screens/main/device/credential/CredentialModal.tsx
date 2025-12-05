@@ -769,7 +769,7 @@ export default function CredentialModal({
 											(credential, index) => (
 												<CredentialCard
 													key={index}
-													deviceId={''}
+													deviceId={deviceId}
 													credential={credential}
 													isSelectExisting={true}
 												/>

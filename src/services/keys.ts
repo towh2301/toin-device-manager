@@ -42,6 +42,8 @@ export enum API_KEYS {
 	ALL_CREDENTIALS = 'all_credentials',
 	CREDENTIAL_BY_ID = 'credential_by_id',
 	CREDENTIAL_BY_DEVICE = 'credential_by_device',
+	LINK_DEVICE_CREDENTIAL = 'link_device_credential',
+	DELETE_LINK_DEVICE_CREDENTIAL = 'delete_link_device_credential',
 
 	// QR Code
 	DEVICE_QR_CODE = 'device_qr_code',

@@ -249,3 +249,30 @@ export function useUnlinkSoftware() {
 		},
 	});
 }
+
+// Link Credential
+export function useLinkDeviceCredential() {
+	const api = useDeviceApi();
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: ({
+			deviceId,
+			credentialId,
+		}: {
+			deviceId: string;
+			credentialId: string;
+		}) => api.linkCredential(deviceId, credentialId),
+
+		onSuccess: () => {
+			queryClient.invalidateQueries({
+				queryKey: [API_KEYS.LINK_DEVICE_CREDENTIAL],
+			});
+			console.log('Link device credential successfully!');
+		},
+
+		onError: (error: Error) => {
+			console.error('Fail to link device & Credential');
+		},
+	});
+}

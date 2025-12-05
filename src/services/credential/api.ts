@@ -135,6 +135,27 @@ const useCredentialApi = (baseURL = API_URL) => {
 		}
 	};
 
+	// Link credential with device
+	const linkCredential = async (deviceId: string, credentialId: string) => {
+		const endpoint = `/credentials/${deviceId}/link/${credentialId}`;
+		try {
+			const { data } = await privateApi.post<
+				ApiResponseType<{
+					deviceId: {
+						id: string;
+						name: string;
+					};
+					credential: {
+						id: string;
+					};
+				}>
+			>(endpoint);
+			return data;
+		} catch (error) {
+			handleAxiosError(error, `POST ${endpoint}`, baseURL);
+		}
+	};
+
 	return {
 		getAllCredentials,
 		getCredentialById,

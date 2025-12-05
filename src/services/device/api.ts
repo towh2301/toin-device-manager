@@ -327,8 +327,30 @@ const useDeviceApi = (baseURL = API_URL) => {
 		}
 	};
 
+	// Link credential with device
+	const linkCredential = async (deviceId: string, credentialId: string) => {
+		const endpoint = `/devices/credentials/${deviceId}/link/${credentialId}`;
+		try {
+			const { data } = await privateApi.post<
+				ApiResponseType<{
+					deviceId: {
+						id: string;
+						name: string;
+					};
+					credential: {
+						id: string;
+					};
+				}>
+			>(endpoint);
+			return data;
+		} catch (error) {
+			console.error('❌ Failed to link credential:', error);
+		}
+	};
+
 	return {
 		// Device CRUD
+		linkCredential,
 		createDevice,
 		getDeviceList,
 		getDeviceById,

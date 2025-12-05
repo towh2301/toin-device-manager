@@ -1,5 +1,6 @@
 import { AppColors } from '@/src/common/app-color';
 import { CredentialResponse } from '@/src/services/credential';
+import { useLinkDeviceCredential } from '@/src/services/device/useDeviceMutations';
 import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
 import React, { useState } from 'react';
@@ -29,6 +30,9 @@ export default function CredentialCard({
 		id: string | number;
 		data?: CredentialResponse;
 	} | null>(null);
+
+	const { mutate: linkDeviceCredential, isSuccess } =
+		useLinkDeviceCredential();
 
 	const toggleExpand = () => {
 		setIsExpanded((prev) => !prev);
@@ -74,6 +78,22 @@ export default function CredentialCard({
 		setEditingCredential(null);
 		Alert.alert('✓ Thành công', 'Cập nhật thông tin đăng nhập thành công');
 		onSuccess?.(); // Trigger parent refresh
+	};
+
+	const handleLinkCredentials = async ({
+		deviceId,
+		credentialId,
+	}: {
+		deviceId: string;
+		credentialId: string;
+	}) => {
+		try {
+			await linkDeviceCredential({ deviceId, credentialId });
+
+			onSuccess?.();
+		} catch (error) {
+			console.error(error);
+		}
 	};
 
 	return (
@@ -404,6 +424,35 @@ export default function CredentialCard({
 										</YStack>
 									</>
 								)}
+							<YStack height={'auto'}>
+								<XStack
+									flex={1}
+									justifyContent="flex-end"
+									height={'auto'}
+									gap={30}
+								>
+									<Button
+										flex={1}
+										backgroundColor={AppColors.danger}
+										height={32}
+									>
+										<Text color="white">Xóa</Text>
+									</Button>
+									<Button
+										flex={1}
+										backgroundColor={AppColors.successDark}
+										height={32}
+										onPress={() =>
+											handleLinkCredentials({
+												deviceId: deviceId,
+												credentialId: credential.id,
+											})
+										}
+									>
+										<Text color="white">Thêm</Text>
+									</Button>
+								</XStack>
+							</YStack>
 						</>
 					)}
 				</YStack>
