@@ -1,6 +1,9 @@
 import { AppColors } from '@/src/common/app-color';
 import { CredentialResponse } from '@/src/services/credential';
-import { useLinkDeviceCredential } from '@/src/services/device/useDeviceMutations';
+import {
+	useLinkDeviceCredential,
+	useUnlinkDeviceCredential,
+} from '@/src/services/device/useDeviceMutations';
 import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
 import React, { useState } from 'react';
@@ -9,19 +12,23 @@ import { Button, Card, Separator, Text, XStack, YStack } from 'tamagui';
 import CredentialModal from './CredentialModal';
 
 type CredentialCardProps = {
+	deviceCredentialId: string;
 	deviceId: string;
 	credential: CredentialResponse;
 	onDelete?: (credentialId: string | number) => void;
 	onSuccess?: () => void; // Add this for refresh callback
 	isSelectExisting: boolean;
+	refetchDeviceCredentials: () => void;
 };
 
 export default function CredentialCard({
+	deviceCredentialId,
 	deviceId,
 	credential,
 	onDelete,
 	onSuccess,
 	isSelectExisting,
+	refetchDeviceCredentials,
 }: CredentialCardProps) {
 	const [isExpanded, setIsExpanded] = useState<boolean>(false);
 	const [showPassword, setShowPassword] = useState<boolean>(false);
@@ -31,8 +38,11 @@ export default function CredentialCard({
 		data?: CredentialResponse;
 	} | null>(null);
 
-	const { mutate: linkDeviceCredential, isSuccess } =
+	const { mutate: linkDeviceCredential, isSuccess: isLinkSuccess } =
 		useLinkDeviceCredential();
+
+	const { mutate: unlinkDeviceCredential, isSuccess: isUnlinkSuccess } =
+		useUnlinkDeviceCredential();
 
 	const toggleExpand = () => {
 		setIsExpanded((prev) => !prev);
@@ -55,21 +65,23 @@ export default function CredentialCard({
 		setShowPassword((prev) => !prev);
 	};
 
-	const handleDelete = () => {
-		Alert.alert(
-			'Xác nhận xóa',
-			`Bạn có chắc chắn muốn xóa thông tin đăng nhập "${credential.username}"?`,
-			[
-				{
-					text: 'Hủy',
-					style: 'cancel',
+	const handleUnlinkCredential = (credentialId: string) => {
+		unlinkDeviceCredential(
+			{ credentialId },
+			{
+				onSuccess: () => {
+					refetchDeviceCredentials();
+
+					// Gọi callback parent nếu cần refresh thêm
+					onSuccess?.();
+
+					setIsShowModal(false);
+					setIsExpanded(false);
 				},
-				{
-					text: 'Xóa',
-					style: 'destructive',
-					onPress: () => onDelete?.(credential.id),
+				onError: () => {
+					Alert.alert('Error', 'Fail to unlink credential');
 				},
-			]
+			}
 		);
 	};
 
@@ -80,22 +92,32 @@ export default function CredentialCard({
 		onSuccess?.(); // Trigger parent refresh
 	};
 
-	const handleLinkCredentials = async ({
+	const handleLinkCredentials = ({
 		deviceId,
 		credentialId,
 	}: {
 		deviceId: string;
 		credentialId: string;
 	}) => {
-		try {
-			await linkDeviceCredential({ deviceId, credentialId });
+		linkDeviceCredential(
+			{ deviceId, credentialId },
+			{
+				onSuccess: () => {
+					console.log('Refetched ngay lập tức!');
+					refetchDeviceCredentials();
 
-			onSuccess?.();
-		} catch (error) {
-			console.error(error);
-		}
+					// Gọi callback parent nếu cần refresh thêm
+					onSuccess?.();
+
+					setIsShowModal(false);
+					setIsExpanded(false);
+				},
+				onError: () => {
+					Alert.alert('Error', 'Fail to link credential');
+				},
+			}
+		);
 	};
-
 	return (
 		<>
 			<Card
@@ -168,7 +190,7 @@ export default function CredentialCard({
 							<XStack gap="$2" marginBottom="$2">
 								{!isSelectExisting && (
 									<>
-										<Separator
+										{/* <Separator
 											borderColor={AppColors.border}
 											marginVertical="$2"
 										/>
@@ -192,11 +214,11 @@ export default function CredentialCard({
 											height={32}
 										>
 											<Text color="white">Sửa</Text>
-										</Button>
+										</Button> */}
 									</>
 								)}
 
-								{onDelete && (
+								{/* {onDelete && (
 									<Button
 										flex={1}
 										icon={
@@ -212,7 +234,7 @@ export default function CredentialCard({
 									>
 										<Text color="white">Xóa</Text>
 									</Button>
-								)}
+								)} */}
 							</XStack>
 
 							<Separator borderColor={AppColors.border} />
@@ -431,26 +453,40 @@ export default function CredentialCard({
 									height={'auto'}
 									gap={30}
 								>
-									<Button
-										flex={1}
-										backgroundColor={AppColors.danger}
-										height={32}
-									>
-										<Text color="white">Xóa</Text>
-									</Button>
-									<Button
-										flex={1}
-										backgroundColor={AppColors.successDark}
-										height={32}
-										onPress={() =>
-											handleLinkCredentials({
-												deviceId: deviceId,
-												credentialId: credential.id,
-											})
-										}
-									>
-										<Text color="white">Thêm</Text>
-									</Button>
+									{!isSelectExisting && (
+										<Button
+											flex={1}
+											backgroundColor={AppColors.danger}
+											height={32}
+											onPress={
+												() =>
+													handleUnlinkCredential(
+														deviceCredentialId
+													)
+												// deviceCre.id
+											}
+										>
+											<Text color="white">Xóa</Text>
+										</Button>
+									)}
+
+									{isSelectExisting && (
+										<Button
+											flex={1}
+											backgroundColor={
+												AppColors.successDark
+											}
+											height={32}
+											onPress={() =>
+												handleLinkCredentials({
+													deviceId: deviceId,
+													credentialId: credential.id,
+												})
+											}
+										>
+											<Text color="white">Thêm</Text>
+										</Button>
+									)}
 								</XStack>
 							</YStack>
 						</>
@@ -470,6 +506,7 @@ export default function CredentialCard({
 						setEditingCredential(null);
 					}}
 					onSuccess={handleEditSuccess}
+					refetchDeviceCredentials={refetchDeviceCredentials}
 				/>
 			)}
 		</>

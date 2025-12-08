@@ -23,6 +23,7 @@ interface CredentialModalProps {
 		data?: CredentialResponse;
 	} | null;
 	credentials?: CredentialResponse[];
+	refetchDeviceCredentials: () => void;
 }
 
 export default function CredentialModal({
@@ -33,6 +34,7 @@ export default function CredentialModal({
 	onSuccess,
 	editingCredential,
 	credentials,
+	refetchDeviceCredentials,
 }: CredentialModalProps) {
 	const [username, setUsername] = useState('');
 	const [password, setPassword] = useState('');
@@ -768,10 +770,14 @@ export default function CredentialModal({
 										{credentials?.map(
 											(credential, index) => (
 												<CredentialCard
+													deviceCredentialId={''}
 													key={index}
 													deviceId={deviceId}
 													credential={credential}
 													isSelectExisting={true}
+													refetchDeviceCredentials={
+														refetchDeviceCredentials
+													}
 												/>
 											)
 										)}

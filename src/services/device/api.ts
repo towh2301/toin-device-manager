@@ -339,6 +339,7 @@ const useDeviceApi = (baseURL = API_URL) => {
 					};
 					credential: {
 						id: string;
+						username: string;
 					};
 				}>
 			>(endpoint);
@@ -348,8 +349,30 @@ const useDeviceApi = (baseURL = API_URL) => {
 		}
 	};
 
+	const unlinkCredential = async (credentialId: string) => {
+		const endpoint = `/devices/credentials/${credentialId}`;
+		try {
+			const { data } = await privateApi.delete<
+				ApiResponseType<{
+					deviceId: {
+						id: string;
+						name: string;
+					};
+					credential: {
+						id: string;
+						username: string;
+					};
+				}>
+			>(endpoint);
+			return data;
+		} catch (error) {
+			console.error('❌ Failed to unlink credential:', error);
+		}
+	};
+
 	return {
 		// Device CRUD
+		unlinkCredential,
 		linkCredential,
 		createDevice,
 		getDeviceList,

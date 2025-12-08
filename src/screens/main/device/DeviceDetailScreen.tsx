@@ -73,9 +73,10 @@ export default function DeviceDetailScreen() {
 
 	const { data: credentialResponse, refetch: refetchCredentials } =
 		useGetAllCredentials();
-	const { data: deviceCredentialResponse } = useGetDeviceCredentialLinks(
-		deviceData?.id || ''
-	);
+	const {
+		data: deviceCredentialResponse,
+		refetch: refetchDeviceCredentials,
+	} = useGetDeviceCredentialLinks(deviceData?.id || '');
 
 	// Mutations - MUST be called before any conditional returns
 	const unassignMutation = useUnassignDevice();
@@ -870,17 +871,37 @@ export default function DeviceDetailScreen() {
 							<Separator borderColor={AppColors.border} />
 							{deviceCredentials.length > 0 ? (
 								<YStack gap="$2">
-									{credentials.map((credential, index) => {
-										return (
-											<CredentialCard
-												key={index}
-												deviceId={deviceData.id}
-												credential={credential}
-												onSuccess={refetchCredentials} // ← Thêm dòng này
-												isSelectExisting={false}
-											/>
-										);
-									})}
+									{deviceCredentials.map(
+										(deviceCredential, index) => {
+											const credential = credentials.find(
+												(c) =>
+													c.id ===
+													(
+														deviceCredential.credential as any
+													).id
+											);
+
+											if (!credential) return null; // 👈 prevent undefined
+
+											return (
+												<CredentialCard
+													key={index}
+													deviceCredentialId={
+														deviceCredential.id
+													}
+													deviceId={deviceData.id}
+													credential={credential}
+													onSuccess={
+														refetchCredentials
+													}
+													isSelectExisting={false}
+													refetchDeviceCredentials={
+														refetchDeviceCredentials
+													}
+												/>
+											);
+										}
+									)}
 								</YStack>
 							) : (
 								<YStack padding="$3" alignItems="center">
@@ -1012,6 +1033,7 @@ export default function DeviceDetailScreen() {
 					refetchCredentials();
 				}}
 				credentials={credentials}
+				refetchDeviceCredentials={refetchDeviceCredentials}
 			/>
 		</>
 	);

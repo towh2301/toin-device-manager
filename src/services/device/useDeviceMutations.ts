@@ -264,15 +264,35 @@ export function useLinkDeviceCredential() {
 			credentialId: string;
 		}) => api.linkCredential(deviceId, credentialId),
 
-		onSuccess: () => {
+		onSuccess: (_, { deviceId }) => {
+			// invalidate correct query for refresh
 			queryClient.invalidateQueries({
-				queryKey: [API_KEYS.LINK_DEVICE_CREDENTIAL],
+				queryKey: [API_KEYS.GET_CREDENTIALS_FOR_DEVICE, deviceId],
 			});
+
 			console.log('Link device credential successfully!');
 		},
 
 		onError: (error: Error) => {
 			console.error('Fail to link device & Credential');
+		},
+	});
+}
+
+export function useUnlinkDeviceCredential() {
+	const api = useDeviceApi();
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: ({ credentialId }: { credentialId: string }) =>
+			api.unlinkCredential(credentialId),
+
+		onSuccess: () => {
+			console.log('Unlink device credential successfully!');
+		},
+
+		onError: (error: Error) => {
+			console.error('Fail to Unlink device & Credential');
 		},
 	});
 }
